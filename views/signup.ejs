@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignUP / Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <%- include("partials/header.ejs") %>
+    <main>
+        <div class="signupcont">
+            <div class="local">
+                <div class="reg">
+                    <h3>Register</h3>
+                    <form action="/signup" method="post">
+                        <p>Email</p>
+                        <input type="email" name="email" placeholder="example@gmail.com" required autofocus>
+                        <p>Password</p>
+                        <input type="password" id="pass" required>
+                        <p>Confirm Password</p>
+                        <input type="password" name="password" id="confirm" required>
+                        <div class="togglepass">
+                            <label for="showpass"><p>Show password</p></label>
+                            <input type="checkbox"  id="showpass">
+                        </div>
+                        <div class="btncont">
+                            <button type="submit">Sign-Up</button>
+                        </div>
+                    </form>
+                </div>
+                <span><em>(OR)</em></span>
+                <form action="/auth" method="post">
+                    <button class="google" type="submit">Continue with Google<img src="/images/google.png"></button>
+                </form>
+            </div>
+        </div>
+    </main>
+    <%- include("partials/footer.ejs") %>
+    <script>
+        document.getElementById('showpass').addEventListener('change',function(){
+            let pass = document.getElementById("pass");
+            let confirm = document.getElementById("confirm");
+            pass.type = this.checked ? "text" : "password";
+            confirm.type = this.checked ? "text" : "password";
+        });
+        document.querySelector("form[action='/signup']").addEventListener("submit", function (event) {
+        let pass = document.getElementById("pass").value;
+        let confirm = document.getElementById("confirm").value;
+
+        if (pass !== confirm) {
+            alert("Passwords do not match!"); 
+            event.preventDefault(); 
+        }
+    });
+    </script>
+</body>
+</html>

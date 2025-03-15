@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penny Pilot</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <%- include("partials/header.ejs") %>
+    <main>
+        <div class="gridcont">
+            <div class="left">
+                <div class="textcont">
+                <h1>Navigate your spending with PennyPilot</h1>
+                <p>PennyPilot is here to make your expense tracking a breeze! Take the stress out of managing your finances and start your journey towards smarter budgeting today.</p>
+            </div>
+            <form method="get" action="/update">
+            <button type="submit">Get Started</button>
+        </form>
+            </div>
+            <div class="right">
+                <img src="/images/hero.jpg" alt="Graphical illustration of cash">
+            </div>
+        </div>
+        <h2 class="featureheader anim">Features</h2>
+        <hr>
+        <div class="featurecont">
+            <div class="feature anim">
+                <h4>Daily Expense Reminders📩</h4>
+                <p>Stay on top of your finances! Get a daily email reminder to update your expenses and keep your budget in check—because every penny counts!</p>
+                <form action="/update" method="get">
+                    <button type="submit">Update expenses</button>
+                </form>
+            </div>
+            <div class="feature anim">
+                <h4>Visual Expense Insights 📊</h4>
+                <p>See where your money goes with stunning graphs! Track your spending trends effortlessly and make smarter financial decisions with clear visual insights.</p>
+                <form action="/track" method="get">
+                    <button type="submit">Track Expenses</button>
+                </form>
+            </div>
+            <div class="feature anim">
+                <h4>Weekly Expense Reports 📅</h4>
+                <p>Your spending, summarized! Get detailed weekly reports to review your expenses, spot patterns, and take control of your budget like a pro.</p>
+                <form action="/track" method="get">
+                    <button type="submit">View Reports</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="simple anim">
+            <div class="calcintro">
+                <h3>Try out our simple calculator to understand about expenses and savings</h3>
+            </div>
+            <div class="calci">
+                <h4 class="rep"><em>Simple Calculator</em></h4>
+                <div class="ipcont">
+                <input type="text" id="savings" placeholder="Your Savings">
+                <input type="text" id="expense" placeholder="Your Expenses">
+            </div>
+                <button class="cal">Calculate</button>
+            </div>
+        </div>
+    </main>
+    <%- include("partials/footer.ejs") %>
+    <script>
+        document.querySelector(".cal").addEventListener("click",()=>{
+            const savings = document.getElementById("savings").value.trim();
+            const expense = document.getElementById("expense").value.trim();
+            const hdr = document.querySelector(".rep");
+            let res;
+
+            if(!isNaN(savings) && !isNaN(expense) && savings !== "" && expense !== "")
+        {
+            res = parseInt(savings) - parseInt(expense);
+            if(res <=0){
+                hdr.innerHTML= `<em>You are in loss of ${res} amount, save better</em>`;
+            }
+            else{
+                hdr.innerHTML = `<em>You have ${res} amount left in savings</em>`;
+            }
+        }
+        else{
+            hdr.innerHTML= "<em>Sorry, enter a valid number</em>";
+        }
+        });
+    </script>
+</body>
+</html>
