@@ -16,7 +16,7 @@ app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(express.json());
 
-const db = new pg.Client({
+const db = new pg.Pool({
     user : process.env.PG_USER,
     host : process.env.PG_HOST,
     database : process.env.PG_DATABASE,
@@ -237,7 +237,7 @@ app.post("/track",async (req,res)=>{
             "options":{
                 "plugins":{
                     "outlabels":{
-                        "color":"white",
+                        "textcolor":"white",
                     }
                 }
             }
