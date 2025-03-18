@@ -35,7 +35,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-
 app.get("/",(req,res)=>{
     res.render("index.ejs");
 });
@@ -106,7 +105,6 @@ app.get("/track",async(req,res)=>{
             "Many products, from furniture to electronics, can be bought second-hand at a fraction of the cost of new ones. Websites like Craigslist, Facebook Marketplace, and thrift stores offer excellent deals. If buying electronics, consider manufacturer-refurbished products with warranties.",
             "Saving money is easier when you have a clear goal. Whether it’s building an emergency fund, saving for a vacation, or planning for retirement, set a target amount and a deadline. Automate your savings by setting up direct transfers to your savings account each payday."
           ];
-
           let titleIndex = Math.floor(Math.random()*titles.length);
           let tipIndex = Math.floor(Math.random()*tips.length);
           let title = titles[titleIndex];
@@ -350,7 +348,9 @@ app.post("/update",async (req,res)=>{
     let notes = req.body.notes;
     if(req.isAuthenticated())
     {
-        const result = await db.query("INSERT INTO expenses(amount,category,add_date,notes,user_name) VALUES($1,$2,$3,$4,$5) RETURNING *",[amount,category,date,notes,req.user.email]);
+        const idRes = await db.query(`SELECT id FROM users WHERE email = $1`,[req.user.email]);
+        let id = idRes.rows[0].id;
+        const result = await db.query("INSERT INTO expenses(amount,category,add_date,notes,user_name,user_id) VALUES($1,$2,$3,$4,$5,$6) RETURNING *",[amount,category,date,notes,req.user.email,id]);
         let streak = await db.query(`
             UPDATE users
             SET 
@@ -364,8 +364,6 @@ app.post("/update",async (req,res)=>{
             WHERE email = $1
             RETURNING * 
             `,[req.user.email]);
-            console.log(streak.rows);
-        console.log(streak.rows);
         req.session.message = "Expenses added successfully!";
 
         res.redirect("/update");
