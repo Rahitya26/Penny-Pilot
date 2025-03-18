@@ -17,14 +17,13 @@ app.use(bodyParser.urlencoded({extended:true}));
 app.use(express.json());
 
 const db = new pg.Pool({
-    user : process.env.PG_USER,
-    host : process.env.PG_HOST,
-    database : process.env.PG_DATABASE,
-    password : process.env.PG_PASSWORD,
-    port : process.env.PG_PORT,
+    connectionString : process.env.DATABASE_URL,
+    ssl:{
+        rejectUnauthorized: false,
+    }
 })
 
-db.connect();
+db.connect().then(()=>console.log("Connected to db")).catch((err)=>console.log("Error connecting to db",err));
 
 app.use(session({
     secret : process.env.SESSION_SECRET,
