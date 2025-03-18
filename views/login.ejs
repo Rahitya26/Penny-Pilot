@@ -21,6 +21,9 @@
                         <label for="showpass"><p>Show password</p></label>
                         <input type="checkbox"  id="showpass">
                     </div>
+                    <% if(error.length>0){ %>
+                    <span><%= error %></span>
+                    <% } %>
                     <div class="login-btn"><button type="submit">Submit</button></div>
                 </form>     
             </div>

@@ -8,6 +8,7 @@ import env from "dotenv";
 import { Strategy } from "passport-local";
 import nodemailer from "nodemailer";
 import otpGenerator from "otp-generator";
+import flash from "connect-flash";
 
 const port = 3000;
 const app = express();
@@ -16,15 +17,14 @@ app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(express.json());
 
-const db = new pg.Client({
-    user : process.env.PG_USER,
-    host : process.env.PG_HOST,
-    database : process.env.PG_DATABASE,
-    password : process.env.PG_PASSWORD,
-    port : process.env.PG_PORT,
+const db = new pg.Pool({
+    connectionString : process.env.DATABASE_URL,
+    ssl:{
+        rejectUnauthorized: false,
+    }
 })
 
-db.connect();
+db.connect().then(()=>console.log("Connected to db")).catch((err)=>console.log("Error connecting to db",err));
 
 app.use(session({
     secret : process.env.SESSION_SECRET,
@@ -34,6 +34,11 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use(flash());
+app.use((req, res, next) => {
+    res.locals.error = req.flash("error"); 
+    next();
+});
 
 app.get("/",(req,res)=>{
     res.render("index.ejs");
@@ -235,7 +240,7 @@ app.post("/track",async (req,res)=>{
             "options":{
                 "plugins":{
                     "outlabels":{
-                        "color":"white",
+                        "textcolor":"white",
                     }
                 }
             }
@@ -309,7 +314,7 @@ app.post("/signup",async(req,res)=>{
     let otp_entered = req.body.otp;
     console.log(otp_entered);
     if(!req.session.otp_generated || otp_entered !== req.session.otp_generated){
-        req.session.error = "Wrong OTP (or) OTP expired. Please try again";
+        req.session.error = "Wrong OTP. Please try again";
         return res.redirect("/signup");
     }
     let checkRes = await db.query("SELECT * FROM users WHERE email = $1",[email]);
@@ -335,10 +340,19 @@ app.post("/signup",async(req,res)=>{
 
 });
 
-app.post("/login",passport.authenticate("local",{
-    successRedirect:"/update",
-    failureRedirect:"/login",
-}))
+app.post("/login", (req, res, next) => {
+    passport.authenticate("local", (err, user, info) => {
+        if (err) return next(err);
+        if (!user) {
+            req.flash("error", info.message); 
+            return res.redirect("/login"); 
+        }
+        req.logIn(user, (err) => {
+            if (err) return next(err);
+            return res.redirect("/update"); 
+        });
+    })(req, res, next);
+});
 
 
 app.post("/update",async (req,res)=>{
@@ -379,7 +393,7 @@ passport.use("local",new Strategy(async function verify(username,password,cb){
     const checkRes = await db.query("SELECT * FROM users WHERE email = $1",[username]);
     if(checkRes.rows.length === 0){
         console.log("No user found");
-        return cb(null,false);
+        return cb(null,false,{message : "No user found with this email"});
     }
     else{
         let user = checkRes.rows[0];
@@ -390,7 +404,7 @@ passport.use("local",new Strategy(async function verify(username,password,cb){
         }
         else{
             console.log("Passwords not matched");
-            return cb(null,false);
+            return cb(null,false,{message : "Passwords doesn't match"});
         }
     }
 }
