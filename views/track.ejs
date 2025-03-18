@@ -4,16 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <style>
-        img{
-            height: 400px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <% if(locals.chartUrl){ %>
-        <img src="<%= chartUrl %>" alt="">
-        <% } %>
-        <h1>hello world</h1>
-</body>
+<%- include("partials/header.ejs") %>
+<main>
+    <div class="track-cont">
+        <div class="insights mini">
+            <h2>Personalized Insights</h2>
+            <p>Whoa! Your spending habits reveal that most of your expenses are going toward <span><%=mostSpentCategory %></span>. It looks like this category is taking the biggest bite out of your budget! Maybe it's time to rethink your priorities? 💰📊</p>
+        </div>
+        <div class="streak mini">
+            <h2>Gamification & Streaks</h2>
+            <p>You've logged expenses for <span><%=streak %><% if(streak > 1){ %> days<% }else{%> day<% } %></span> in a row! Keep going!</p>
+        </div>
+        <div class="tips mini">
+            <h2><%= title %></h2>
+            <p><%= tip %></p>
+        </div>
+        <div class="graph">
+            <h3>Graphical View</h3>
+            <% if (locals.chartUrl){ %>
+                <img src=<%=chartUrl %> alt="chart">
+                <% } %>
+                    <form action="/track" method="post">
+                        <select name="type" id="type" required>
+                            <option disabled selected>Select a category</option>
+                            <option value="bar">Bar</option>
+                            <option value="line">Line</option>
+                            <option value="pie">Pie</option>
+                            <option value="radar">Radar</option>
+                        </select>
+                        <button type="submit">Generate</button>
+                    </form>
+        </div>
+    </div>
+    <%- include("partials/footer.ejs") %>
+</main>
 </html>

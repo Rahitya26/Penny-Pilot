@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rock+Salt&display=swap');
 *{
     margin: 0;
     padding: 0;
@@ -10,6 +11,7 @@ body{
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 /* Utility class */
@@ -377,6 +379,7 @@ footer svg{
     display: flex;
     justify-content: center;
     align-self:center;
+    margin-bottom: 20%;
 }
 
 .local{
@@ -405,6 +408,7 @@ footer svg{
 }
 .reg input{
     padding: 10px;
+    margin: 10px 0px;
     border-radius: 8px;
     outline: none;
     background-color: #eee;
@@ -668,4 +672,106 @@ footer svg{
         color: white;
         box-shadow: none;
     }
+}
+
+/* Tracking page */
+
+.track-cont{
+    width: 100%;
+    height: 200vh;
+    background-image: linear-gradient(135deg,#2F4B26,#B5b25C);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.mini{
+    width: 80%;
+    height: 10%;
+    position: relative;
+    background-color: white;
+    margin-top: 20px;
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+
+.mini h2{
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-family: "Comic Neue";
+}
+
+.mini p{
+    font-size: 300;
+}
+
+.mini span{
+    color: #FF9800;
+    font-weight: bold;
+    font-size: x-large;
+    margin: 0px 5px;
+}
+
+
+.graph{
+    width: 80%;
+    height: 50%;
+    background-color: white;
+    border-radius: 20px;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px;
+}
+
+.graph select{
+    padding: 10px;
+    border-radius: 10px;
+    margin: 0px 10px;
+    background-color: #eee;
+    outline: none;
+    cursor: pointer;
+}
+
+.graph button{
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    outline: none;
+    background-color: black;
+    color: white;
+    cursor: pointer;
+    transition: all 300ms ease;
+    &:hover{
+        background-color: white;
+        color: black;
+        border: 2px solid black;
+        transform: translateY(-3px);
+        box-shadow: 0px 2px 10px 2px rgba(0,0,0,0.2);
+    }
+}
+
+.graph img{
+    margin: auto;
+    width: 70%;
+}
+
+.otp_email{
+    width: 100%;
+}
+
+.reg span{
+    color: red;
+    font-size: small;
+}
+
+.error{
+    color: red;
+    font-size: large;
 }
