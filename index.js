@@ -40,6 +40,14 @@ app.use((req, res, next) => {
     next();
 });
 
+const transporter = nodemailer.createTransport({
+    service:"gmail",
+    auth:{
+        user : process.env.EMAIL_USERNAME,
+        pass : process.env.PASS,
+    }
+});
+
 app.get("/",(req,res)=>{
     res.render("index.ejs");
 });
@@ -165,6 +173,10 @@ else{
 }
 });
 
+app.get("/forgot",(req,res)=>{
+    res.render("forgot.ejs");
+});
+
 app.get("/logout",(req,res)=>{
     req.logout(err=>{
         if(err){
@@ -280,20 +292,12 @@ app.post("/verify",async (req,res)=>{
         specialChars:false,
     });
     req.session.otp_generated = otp;
-    console.log(req.session.otp_generated);
-    const transporter = nodemailer.createTransport({
-        service:"gmail",
-        auth:{
-            user : process.env.EMAIL_USERNAME,
-            pass : process.env.PASS,
-        }
-    });
-    
     transporter.sendMail({
-        from:process.env.USERNAME,
+        from:process.env.EMAIL_USERNAME,
         to:user_email,
         subject:"Authentication Email",
-        html:`<h1>OTP for registration is</h1><br><h3>${otp}</h3>`
+        html:`        <h1>OTP Authentication</h1><br>
+        <p>We recieved your registration request for PennyPilot to process use this OTP:<b>${otp}</b> for verification</p>`
     },(err,info)=>{
         if(err)
         {
@@ -387,6 +391,45 @@ app.post("/update",async (req,res)=>{
     }
 });
 
+app.post("/otp",async (req,res)=>{
+    let email = req.body.email;
+    let result = await db.query("SELECT * FROM users WHERE email = $1",[email]);
+    if(result.rows.length == 0){
+        return res.json({msg : "No such user found"});
+    }
+    else{
+        let otp = await otpGenerator.generate(6,{
+            upperCaseAlphabets : false,
+            specialChars: false,
+        });
+        req.session.password_otp = otp;
+        transporter.sendMail({
+            from:process.env.EMAIL_USERNAME,
+            to:email,
+            subject:"Password recovery",
+            html:`        <h1>Password Recovery</h1><br>
+        <p>We recieved your request for password change to proceed further use this OTP: <h2><b>${otp}</b></h2> for password change</p>`
+        });
+        return res.json({msg:"otp sent"});
+    }
+});
+
+app.post("/forgot",async (req,res) => {
+    let password = req.body.newPassword;
+    let email = req.body.email;
+    let otp_generated = req.session.password_otp;
+    let otp_entered = req.body.otp_entered;
+    if(otp_generated.trim() == otp_entered.trim()){
+    let hash = await bcrypt.hash(password,10);
+    req.session.password_otp = null;
+    let result = await db.query(`UPDATE users SET password = $1 WHERE email = $2`,[hash,email]);
+    return res.json({msg:"Password changed successfully"});
+    }
+    else{
+        return res.json({msg : "Invalid OTP"});
+    }
+
+});
 
 passport.use("local",new Strategy(async function verify(username,password,cb){
     try{

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot Password</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <%- include("partials/header.ejs") %>
+    <div class="forgot-cont">
+        <div class="forgot">
+            <h3>Password Recovery</h3>
+            <input type="email" name="email" id="email" autofocus required placeholder="Enter email">
+            <div class="btncont">
+                <button onclick="sendOtp()" class="otpsender">Send OTP</button>
+            </div>
+            <input type="hidden" id="otp_input" placeholder="Enter OTP here">
+            <input type="hidden" name="newpass" id="newpass" placeholder="Enter new password" required>
+            <div class="btncont frgt">
+                <button onclick="newPass()">Submit</button>
+            </div>
+            <span class="pwd"></span>
+        </div>
+    </div>
+    <script>
+        let otpbtn = document.querySelector(".otpsender");
+        function sendOtp(){
+            let emailInput = document.querySelector("#email");
+            if(!emailInput || emailInput.value.trim() === ""){
+                return alert("Enter an email for password recovery");
+            }
+            let email = emailInput.value;
+            fetch("/otp",{
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json",
+                },
+                body:JSON.stringify({email}),
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.msg == "No such user found"){
+                    return alert("No such user found");
+                }
+                else{
+                    document.querySelector("#newpass").type = "password";
+                    document.querySelector(".frgt").style.display = "block";
+                    document.querySelector("#otp_input").type = "text";
+                    emailInput.disabled = true;
+                }
+
+            })
+            .catch(err => console.log(err));
+        
+    }
+        function newPass(){
+            let newPassword = document.querySelector("#newpass").value;
+            let email = document.getElementById("email").value;
+            let otp_entered = document.querySelector("#otp_input").value;
+            if(newPassword.trim() == "" || !newPassword){
+                return alert("Enter new password");
+            }
+            let spn = document.querySelector(".pwd");
+            fetch("/forgot",{
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json",
+                },
+                body:JSON.stringify({newPassword,email,otp_entered}),
+            })
+            .then(res => res.json())
+            .then(data => {
+                spn.textContent = data.msg;
+                if(data.msg == "Password changed successfully"){
+                    setTimeout(()=>{
+                        window.location.href = "/login";
+                    },2000);
+                }
+            })
+            .catch(err => console.log(err));
+        }
+    </script>
+</body>
+</html>

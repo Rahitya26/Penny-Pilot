@@ -14,6 +14,28 @@ body{
     height: 100%;
 }
 
+.upbtn{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 30px;
+    width: 30px;
+    border-radius: 50%;
+    background-color: #243a1d5b;
+    backdrop-filter: blur(5px);
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    opacity: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upbtn.show{
+    opacity: 1;
+    animation: rotate 0.5s ease;
+}
+
 /* Utility class */
 
 .anim{
@@ -34,7 +56,14 @@ body{
     }
 }
 /* Nav bar css */
-
+@keyframes rotate{
+    from{
+        transform: rotate(0deg);
+    }
+    to{
+        transform: rotate(360deg);
+    }
+}
 nav{
     height: 60px;
     background-color: #B5b25C;
@@ -74,7 +103,7 @@ nav a{
     display: none;
 }
 
-svg{
+nav svg{
     fill: #f9f9f9;
 }
 
@@ -82,81 +111,6 @@ svg{
     display: none;
 }
 
-@media(max-width:425px){
-    /* Nav bar Responsive */
-    .links{
-        flex-direction: column;
-        background-image: linear-gradient(45deg,#b5b25cc9,#2f4b26d0);
-        width: 60%;
-        align-items: flex-start;
-        position: fixed;
-        top: 0;
-        right: -100%;
-        transition: all 0.75s ease;
-        box-shadow: -3px 0px 10px 3px rgba(0,0,0,0.2);
-        backdrop-filter: blur(10px);
-    }
-
-    .open,.close{
-        display: block;
-        padding: 20px;
-    }
-
-    .links a{
-        box-sizing: border-box;
-        height: auto;
-        margin: 20px 30px;
-    }
-
-    #sidebar:checked ~ .links{
-        right: 0;
-    }
-
-    #sidebar:checked ~ .overlay{
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100vh;
-        z-index: 9;
-    }
-
-    /* Main hero responsive */
-
-    .gridcont{
-        grid-template-columns: 1fr !important;
-    }
-    .right{
-        position: absolute;
-        top: 60px;
-        z-index: -1;
-        opacity: 0.2;
-    }
-    .right img{
-        height: 100%;
-    }
-    .textcont{
-        width: 100% !important;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        margin: 10px;
-    }
-    .textcont p{
-        font-size: 18px;
-    }
-    .left{
-        margin: 0 !important;
-        grid-area: 1 / 1 / -1 / -1;
-        align-items: center;
-    }
-    .left button{
-        margin-top: 20px;
-    }
-
-
-}
 
 
 
@@ -656,6 +610,13 @@ footer svg{
     margin: 0px 0px 25px 0px;
 }
 
+.login-box a{
+    margin-left: auto;
+    color: white;
+    font-size: 15px;
+    margin-bottom: 20px;
+}
+
 .login-btn button{
     padding: 8px 20px;
     margin-top: 20px;
@@ -778,4 +739,313 @@ footer svg{
 .login-box span{
     color: wheat;
     font-size: small;
+}
+.forgot-cont{
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-image: linear-gradient(to bottom right,#2F4B26 30%,#B5b25C);
+}
+
+.forgot{
+    padding: 20px;
+    width: 30%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+.frgt{
+    display: none;
+}
+.pwd{
+    color: white;
+}
+
+.forgot h3{
+    color: white;
+    font-weight: 600;
+}
+.forgot input {
+padding: 10px;
+border: none;
+outline: none;
+border-radius: 8px;
+margin: 10px 0px;
+}
+
+
+@media(max-height:857px){
+    .featureheader{
+        margin-top: 0;
+    }
+}
+
+
+@media(max-width:768px){
+    /* Nav bar Responsive */
+    .links{
+        flex-direction: column;
+        background-image: linear-gradient(45deg,#b5b25cc9,#2f4b26d0);
+        width: 60%;
+        align-items: flex-start;
+        position: fixed;
+        top: 0;
+        right: -100%;
+        transition: all 0.75s ease;
+        box-shadow: -3px 0px 10px 3px rgba(0,0,0,0.2);
+        backdrop-filter: blur(10px);
+    }
+
+    .open,.close{
+        display: block;
+        padding: 20px;
+    }
+
+    .links a{
+        box-sizing: border-box;
+        height: auto;
+        margin: 20px 30px;
+    }
+
+    #sidebar:checked ~ .links{
+        right: 0;
+    }
+
+    #sidebar:checked ~ .overlay{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        z-index: 9;
+    }
+
+    /* Main hero responsive */
+
+    .gridcont{
+        grid-template-columns: 1fr !important;
+    }
+    .right{
+        position: absolute;
+        top: 60px;
+        z-index: -1;
+        opacity: 0.2;
+    }
+    .right img{
+        height: 100%;
+    }
+    .textcont{
+        width: 100% !important;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin: 10px;
+    }
+    .textcont p{
+        font-size: 18px;
+    }
+    .left{
+        margin: 10px;
+        margin-top: 20%;
+        grid-area: 1 / 1 / -1 / -1;
+        align-items: center;
+    }
+    .left button{
+        margin-top: 20px;
+    }
+    .featureheader{
+        margin-top: 60%;
+    }
+
+    .featurecont{
+        flex-direction: column;
+    }
+    .simple{
+        flex-direction: column;
+        width: 90%;
+        height: 400px;
+    }
+    .calcintro{
+        width: 100%;
+    }
+    .calci{
+        width: 100%;
+    }
+    .calci input{
+        width: auto;
+    }
+    .login-box{
+        width: 100%;
+    }
+    .signupcont{
+        margin-bottom: 30%;
+    }
+    .reg{
+        width: 90%;
+    }
+    .update-cont {
+        flex-direction: column;
+        height: auto;
+        padding: 10px 0px;
+        align-items: center;
+    }
+
+    .add-cont {
+        width: 100%;
+        position: static;
+        top: 0;
+        right: 0;
+        padding: 15px 0px;
+    }
+
+    .form-cont {
+        width: 90%;
+        gap: 10px;
+    }
+
+    .form-cont input,
+    .form-cont select {
+        width: 100%;
+    }
+
+    .example-cont {
+        width: 90%;
+        height: auto;
+        padding: 10px;
+    }
+
+    .ex-cards {
+        flex-direction: column;
+        width: 100%;
+        margin: 15px 0;
+        height: auto;
+        padding: 25px;
+    }
+
+    .ex-txt {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .ex-img {
+        width: 100%;
+        text-align: center;
+    }
+
+    .ex-img img {
+        height: 120px;
+        width: auto;
+        border-radius: 12px;
+    }
+
+    .success {
+        width: 100%;
+        margin: 10px 0;
+    }
+
+    .form-cont h2 {
+        font-size: 1.2em;
+    }
+
+    .track-cont{
+        height: 100vh;
+    }
+    
+    .mini{
+        height: auto;
+    }
+
+    .mini h2{
+        font-size: large;
+        position: static;
+        margin-bottom: 10px;
+    }
+
+    .mini p{
+        font-size: smaller;
+    }
+    .mini span{
+        font-size: medium;
+    }
+
+    .graph{
+        height: 30%;
+        margin-bottom: 20px;
+    }
+    .graph h3{
+        font-size: medium;
+    }
+    .graph select{
+        font-size: small;
+        padding: 5px;
+    }
+    .graph img{
+        height: 100%;
+        margin-bottom: 20px;
+        object-fit: contain;
+    }
+    .graph button{
+        padding: 5px;
+    }
+
+    .fooright a {
+        margin: 5px;
+    }
+
+    footer {
+        flex-direction: column;
+        text-align: center;
+        padding: 30px 0px;
+    }
+    .fooleft, .fooright {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    footer h1{
+        font-size: x-large;
+    }
+    footer p{
+        font-size: small;
+    }
+    footer svg{
+        height: 20px;
+    }
+    .login-box a{
+        font-size: smaller !important;
+    }
+    .login-box p{
+        font-size: smaller !important;
+    }
+    .forgot{
+        width: 90%;
+    }
+
+}
+
+@media(min-width:768px){
+    .graph{
+        height: auto;
+    }
+    .feature{
+        width: 80%;
+    }
+}
+
+@media(max-width:1024px){
+    .track-cont{
+        height: 130vh;
+    }
+}
+@media(max-width:384px){
+    .simple input{
+        box-sizing: border-box;
+        margin:5px 15px;
+        width:90%;
+    }
+    .feature{
+        width: 80%;
+    }
 }
