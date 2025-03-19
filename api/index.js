@@ -10,11 +10,9 @@ import nodemailer from "nodemailer";
 import otpGenerator from "otp-generator";
 import flash from "connect-flash";
 import serverless from "serverless-http";
-export const handler = serverless(app);
 
-const port = 3000;
-const app = express();
 env.config();
+const app = express();
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(express.json());
@@ -24,7 +22,9 @@ const db = new pg.Pool({
     ssl:{
         rejectUnauthorized: false,
     }
-})
+});
+app.set("view engine", "ejs");
+app.set("views", "./views");
 
 db.connect().then(()=>console.log("Connected to db")).catch((err)=>console.log("Error connecting to db",err));
 
@@ -53,6 +53,7 @@ const transporter = nodemailer.createTransport({
 app.get("/",(req,res)=>{
     res.render("index.ejs");
 });
+
 app.get("/update",(req,res)=>{
     if(req.isAuthenticated())
     {
@@ -467,6 +468,4 @@ passport.deserializeUser((user,cb)=>{
     return cb(null,user);
 });
 
-// app.listen(port,()=>{
-//     console.log(`Server is running on http://localhost:${port}`);
-// });
+export const handler = serverless(app);
