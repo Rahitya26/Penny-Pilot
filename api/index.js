@@ -11,8 +11,8 @@ import otpGenerator from "otp-generator";
 import flash from "connect-flash";
 import serverless from "serverless-http";
 
-env.config();
 const app = express();
+env.config();
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(express.json());
@@ -468,4 +468,5 @@ passport.deserializeUser((user,cb)=>{
     return cb(null,user);
 });
 
+export default app;
 export const handler = serverless(app);
