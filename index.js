@@ -12,6 +12,7 @@ import flash from "connect-flash";
 import serverless from "serverless-http";
 
 const app = express();
+const port = 3000;
 env.config();
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended:true}));
@@ -468,5 +469,8 @@ passport.deserializeUser((user,cb)=>{
     return cb(null,user);
 });
 
-export default app;
-export const handler = serverless(app);
+// export default app;
+// export const handler = serverless(app);
+app.listen(port,(req,res)=>{
+    console.log(`Server running on ${port}`);
+})
