@@ -9,7 +9,6 @@ import { Strategy } from "passport-local";
 import nodemailer from "nodemailer";
 import otpGenerator from "otp-generator";
 import flash from "connect-flash";
-import serverless from "serverless-http";
 
 const app = express();
 const port = 3000;
@@ -469,8 +468,6 @@ passport.deserializeUser((user,cb)=>{
     return cb(null,user);
 });
 
-// export default app;
-// export const handler = serverless(app);
 app.listen(port,(req,res)=>{
     console.log(`Server running on ${port}`);
 })
