@@ -37,6 +37,36 @@
                         <button type="submit">Generate</button>
                     </form>
         </div>
+
+        <div class="expenses-card">
+            <h3>Recent Expenses</h3>
+            <% if (expenses && expenses.length) { %>
+                <div class="table-wrapper">
+                    <table class="expenses-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Expense</th>
+                                <th>Type</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% expenses.forEach(function(expense){ %>
+                                <tr>
+                                    <td><%= expense.add_date.toISOString().split("T")[0] %></td>
+                                    <td>₹ <%= expense.amount %></td>
+                                    <td><%= expense.category %></td>
+                                    <td><%= expense.notes || "-" %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <p class="no-expenses">No expenses recorded yet. Start adding your expenses to see them here.</p>
+            <% } %>
+        </div>
     </div>
     <%- include("partials/footer.ejs") %>
 </main>

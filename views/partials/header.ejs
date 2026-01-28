@@ -18,11 +18,15 @@
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
             </label>
             <a href="/" class="homeLogo">PennyPilot</a>
-            <a href="/update">Update Expenses</a>
-            <a href="/track">Track data</a>
-            <a href="/signup">Sign-Up</a>
-            <a href="/login">Login</a>
-            <a href="/logout">Logout</a>
+            <% if (typeof isAuthenticated !== 'undefined' && isAuthenticated) { %>
+                <a href="/update">Update Expenses</a>
+                <a href="/track">Track data</a>
+                <a href="/logout">Logout</a>
+            <% } else { %>
+                <a href="/track">Track data</a>
+                <a href="/signup">Sign-Up</a>
+                <a href="/login">Login</a>
+            <% } %>
         </div>
     </nav>
 </body>

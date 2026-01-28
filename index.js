@@ -39,6 +39,7 @@ app.use(passport.session());
 app.use(flash());
 app.use((req, res, next) => {
     res.locals.error = req.flash("error"); 
+    res.locals.isAuthenticated = req.isAuthenticated();
     next();
 });
 
@@ -159,6 +160,14 @@ app.get("/track",async(req,res)=>{
             }]
         }
     }));
+    const expensesResult = await db.query(
+        `SELECT amount, add_date, category, notes
+         FROM expenses
+         WHERE user_name = $1
+         ORDER BY add_date DESC`,
+        [req.user.email]
+    );
+    const expenses = expensesResult.rows;
     req.user.streak = streak;
     req.user.mostSpentCategory = mostSpentCategory;
     req.user.tip = tip;
@@ -169,6 +178,7 @@ app.get("/track",async(req,res)=>{
             mostSpentCategory,
             tip,
             title,
+            expenses,
     });
 }
 else{
@@ -276,11 +286,21 @@ app.post("/track",async (req,res)=>{
         break;
 
     }
-    res.render("track.ejs",{chartUrl,
+    const expensesResult = await db.query(
+        `SELECT amount, add_date, category, notes
+         FROM expenses
+         WHERE user_name = $1
+         ORDER BY add_date DESC`,
+        [req.user.email]
+    );
+    const expenses = expensesResult.rows;
+    res.render("track.ejs",{
+        chartUrl,
         mostSpentCategory : req.user.mostSpentCategory,
         streak : req.user.streak,
         tip : req.user.tip,
         title : req.user.title,
+        expenses,
     });
 }
 else{
@@ -378,7 +398,7 @@ app.post("/update",async (req,res)=>{
             update_streak = CASE
             WHEN last_update IS NULL THEN 1
             WHEN last_update = CURRENT_DATE - INTERVAL '1 day' THEN update_streak+1
-            WHEN last_update < CURRENT_DATE - INTERVAL '1 day' THEN 1
+            WHEN last_update < CURRENT_DATE - INTERVAL '1 day' THEN 0
             ELSE update_streak
             END,
             last_update = CURRENT_DATE
