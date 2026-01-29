@@ -44,10 +44,12 @@ app.use((req, res, next) => {
 });
 
 const transporter = nodemailer.createTransport({
-    service: "gmail",
-    pool: true, // Use a connection pool to prevent connection timeouts/blocks
-    maxCalls: 5, // Limit messages per connection
-    maxConnections: 2, // Limit concurrent connections
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // Use STARTTLS
+    pool: true, // Keep connection open
+    maxConnections: 1, // Conservative limit to prevent timeout
+    rateLimit: 1, // Send 1 email per second max
     auth: {
         user: process.env.EMAIL_USERNAME,
         pass: process.env.PASS,
