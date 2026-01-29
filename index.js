@@ -308,22 +308,10 @@ app.post("/verify", async (req, res) => {
         specialChars: false,
     });
     req.session.otp_generated = otp;
-    transporter.sendMail({
-        from: process.env.EMAIL_USERNAME,
-        to: user_email,
-        subject: "Authentication Email",
-        html: `        <h1>OTP Authentication</h1><br>
-        <p>We recieved your registration request for PennyPilot to process use this OTP:<b>${otp}</b> for verification</p>`
-    }, (err, info) => {
-        if (err) {
-            console.log("Error in sending mail", err);
-            return res.json({ msg: "Email address doesn't exisit" });
-        }
-        else {
-            console.log("Email send:", info.response);
-            return res.json({ msg: "OTP sent successfully" });
-        }
-    });
+    await sendEmail(user_email, "Authentication Email", `        <h1>OTP Authentication</h1><br>
+        <p>We recieved your registration request for PennyPilot to process use this OTP:<b>${otp}</b> for verification</p>`);
+
+    return res.json({ msg: "OTP sent successfully" });
 
 });
 
@@ -417,13 +405,8 @@ app.post("/otp", async (req, res) => {
             specialChars: false,
         });
         req.session.password_otp = otp;
-        transporter.sendMail({
-            from: process.env.EMAIL_USERNAME,
-            to: email,
-            subject: "Password recovery",
-            html: `        <h1>Password Recovery</h1><br>
-        <p>We recieved your request for password change to proceed further use this OTP: <h2><b>${otp}</b></h2> for password change</p>`
-        });
+        await sendEmail(email, "Password recovery", `        <h1>Password Recovery</h1><br>
+        <p>We recieved your request for password change to proceed further use this OTP: <h2><b>${otp}</b></h2> for password change</p>`);
         return res.json({ msg: "otp sent" });
     }
 });
