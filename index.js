@@ -500,6 +500,12 @@ app.get("/cron/send-daily-reminders", async (req, res) => {
         const result = await db.query("SELECT email FROM users");
         const users = result.rows;
 
+
+        // FIRE AND FORGET: Do not await the emails.
+        // Send response immediately so the cron job doesn't timeout.
+        res.status(200).json({ message: "Daily reminders triggered. Emails are sending in the background." });
+
+        // Process emails in background
         const emailPromises = users.map(user => {
             if (!user.email) return Promise.resolve();
 
@@ -537,12 +543,12 @@ app.get("/cron/send-daily-reminders", async (req, res) => {
                 .catch(err => console.error(`Failed to send to ${user.email}`, err));
         });
 
-        await Promise.all(emailPromises);
-        res.status(200).json({ message: "Daily reminders processed successfully" });
+        Promise.all(emailPromises).then(() => console.log("All emails processed in background."));
 
     } catch (err) {
         console.error("Error in reminder job:", err);
-        res.status(500).json({ error: "Internal server error" });
+        // If we already sent a response, this does nothing, which is fine for background jobs
+        if (!res.headersSent) res.status(500).json({ error: "Internal server error" });
     }
 });
 
