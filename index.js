@@ -11,73 +11,72 @@ import otpGenerator from "otp-generator";
 import flash from "connect-flash";
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 env.config();
 app.use(express.static("public"));
-app.use(bodyParser.urlencoded({extended:true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
 const db = new pg.Pool({
-    connectionString : process.env.DATABASE_URL,
-    ssl:{
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
         rejectUnauthorized: false,
     }
 });
 app.set("view engine", "ejs");
 app.set("views", "./views");
 
-db.connect().then(()=>console.log("Connected to db")).catch((err)=>console.log("Error connecting to db",err));
+db.connect().then(() => console.log("Connected to db")).catch((err) => console.log("Error connecting to db", err));
 
 app.use(session({
-    secret : process.env.SESSION_SECRET,
-    resave:false,
-    saveUninitialized:true,
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
 }))
 app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(flash());
 app.use((req, res, next) => {
-    res.locals.error = req.flash("error"); 
+    res.locals.error = req.flash("error");
     res.locals.isAuthenticated = req.isAuthenticated();
     next();
 });
 
 const transporter = nodemailer.createTransport({
-    service:"gmail",
-    auth:{
-        user : process.env.EMAIL_USERNAME,
-        pass : process.env.PASS,
+    service: "gmail",
+    auth: {
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.PASS,
     }
 });
 
-app.get("/",(req,res)=>{
+app.get("/", (req, res) => {
     res.render("index.ejs");
 });
 
-app.get("/update",(req,res)=>{
-    if(req.isAuthenticated())
-    {
+app.get("/update", (req, res) => {
+    if (req.isAuthenticated()) {
         let message = req.session.message;
         req.session.message = null;
-        res.render("update.ejs",{message});
+        res.render("update.ejs", { message });
     }
-    else{
+    else {
         res.redirect("/login");
     }
 });
 
-app.get("/signup",(req,res)=>{
-    res.render("signup.ejs",{error : req.session.error});
+app.get("/signup", (req, res) => {
+    res.render("signup.ejs", { error: req.session.error });
     req.session.error = null;
 });
 
-app.get("/login",(req,res)=>{
+app.get("/login", (req, res) => {
     res.render("login.ejs");
 });
 
-app.get("/track",async(req,res)=>{
-    if(req.isAuthenticated()){
+app.get("/track", async (req, res) => {
+    if (req.isAuthenticated()) {
         const titles = [
             "Track Your Spending Regularly",
             "Create a Realistic Budget and Stick to It",
@@ -99,8 +98,8 @@ app.get("/track",async(req,res)=>{
             "Negotiate Your Bills for Better Rates",
             "Consider Buying Second-Hand or Refurbished Items Instead of New",
             "Set Clear Savings Goals and Automate Contributions"
-          ];
-          const tips = [
+        ];
+        const tips = [
             "Keeping a close eye on your spending habits is the first step to better financial management. Use budgeting apps, spreadsheets, or even a simple notebook to log every expense, no matter how small. Over time, this will help you recognize patterns and identify areas where you can cut back without sacrificing much.",
             "A well-planned budget allows you to control your finances instead of letting your finances control you. Categorize your income and expenses, set limits for discretionary spending, and make sure you allocate enough for savings. Adjust your budget monthly based on actual expenses.",
             "Before buying something non-essential, wait 24 hours to determine if you still want or need it. This delay helps you make more thoughtful financial decisions and avoid wasting money on things that provide only short-term satisfaction.",
@@ -121,245 +120,244 @@ app.get("/track",async(req,res)=>{
             "Many service providers—such as internet, cable, and cell phone companies—offer discounts to retain customers. Call them and ask if they can lower your bill, match a competitor’s price, or provide a promotional rate. You’d be surprised how often they say yes.",
             "Many products, from furniture to electronics, can be bought second-hand at a fraction of the cost of new ones. Websites like Craigslist, Facebook Marketplace, and thrift stores offer excellent deals. If buying electronics, consider manufacturer-refurbished products with warranties.",
             "Saving money is easier when you have a clear goal. Whether it’s building an emergency fund, saving for a vacation, or planning for retirement, set a target amount and a deadline. Automate your savings by setting up direct transfers to your savings account each payday."
-          ];
-          let titleIndex = Math.floor(Math.random()*titles.length);
-          let tipIndex = Math.floor(Math.random()*tips.length);
-          let title = titles[titleIndex];
-          let tip = tips[tipIndex];
-    let contRes = await db.query(`SELECT users.update_streak , SUM(expenses.amount) AS total, expenses.category
+        ];
+        let titleIndex = Math.floor(Math.random() * titles.length);
+        let tipIndex = Math.floor(Math.random() * tips.length);
+        let title = titles[titleIndex];
+        let tip = tips[tipIndex];
+        let contRes = await db.query(`SELECT users.update_streak , SUM(expenses.amount) AS total, expenses.category
         FROM expenses
         INNER JOIN users ON expenses.user_id = users.id
         WHERE expenses.user_name = $1
         GROUP BY users.update_streak , expenses.category
-        ORDER BY total DESC`,[req.user.email]);
+        ORDER BY total DESC`, [req.user.email]);
         let streak = 0;
-        let mostSpentCategory= "No category available";
-        if(contRes.rows.length>0){
-         streak = contRes.rows[0].update_streak;
-         mostSpentCategory = contRes.rows[0].category;
+        let mostSpentCategory = "No category available";
+        if (contRes.rows.length > 0) {
+            streak = contRes.rows[0].update_streak;
+            mostSpentCategory = contRes.rows[0].category;
         }
-    let result = await db.query(`
+        let result = await db.query(`
     select sum(amount) as total,category
     from expenses
     where user_name = $1
-    group by category`,[req.user.email]);
-    let label = result.rows.map(row => row.category);
-    let data = result.rows.map(row => row.total);
-    if(label.length==0){
-        label = ["No data"],
-        data = [0];
-    }
-    let chartUrl = "https://quickchart.io/chart?c=" + encodeURIComponent(JSON.stringify({
-        type:"line",
-        data:{
-            labels:label,
-            datasets:[{
-                label : "Amount",
-                data : data,
-                backgroundColor : "rgba(255, 0, 0,0.2)",
-            }]
+    group by category`, [req.user.email]);
+        let label = result.rows.map(row => row.category);
+        let data = result.rows.map(row => row.total);
+        if (label.length == 0) {
+            label = ["No data"],
+                data = [0];
         }
-    }));
-    const expensesResult = await db.query(
-        `SELECT amount, add_date, category, notes
+        let chartUrl = "https://quickchart.io/chart?c=" + encodeURIComponent(JSON.stringify({
+            type: "line",
+            data: {
+                labels: label,
+                datasets: [{
+                    label: "Amount",
+                    data: data,
+                    backgroundColor: "rgba(255, 0, 0,0.2)",
+                }]
+            }
+        }));
+        const expensesResult = await db.query(
+            `SELECT amount, add_date, category, notes
          FROM expenses
          WHERE user_name = $1
          ORDER BY add_date DESC`,
-        [req.user.email]
-    );
-    const expenses = expensesResult.rows;
-    req.user.streak = streak;
-    req.user.mostSpentCategory = mostSpentCategory;
-    req.user.tip = tip;
-    req.user.title = title;
-    res.render("track.ejs",{
+            [req.user.email]
+        );
+        const expenses = expensesResult.rows;
+        req.user.streak = streak;
+        req.user.mostSpentCategory = mostSpentCategory;
+        req.user.tip = tip;
+        req.user.title = title;
+        res.render("track.ejs", {
             chartUrl,
             streak,
             mostSpentCategory,
             tip,
             title,
             expenses,
-    });
-}
-else{
-    res.redirect("/login");
-}
+        });
+    }
+    else {
+        res.redirect("/login");
+    }
 });
 
-app.get("/forgot",(req,res)=>{
+app.get("/forgot", (req, res) => {
     res.render("forgot.ejs");
 });
 
-app.get("/logout",(req,res)=>{
-    req.logout(err=>{
-        if(err){
+app.get("/logout", (req, res) => {
+    req.logout(err => {
+        if (err) {
             console.error("Error is:");
         }
-        else{
+        else {
             res.redirect("/");
         }
     })
 });
 
-app.post("/track",async (req,res)=>{
-    if(req.isAuthenticated()){
-    let type = req.body.type;
-    let qry;
-    switch(type){
-        case "bar" : qry = "SELECT add_date,SUM(amount) AS total FROM expenses WHERE user_name = $1 GROUP BY add_date";
-        break;
+app.post("/track", async (req, res) => {
+    if (req.isAuthenticated()) {
+        let type = req.body.type;
+        let qry;
+        switch (type) {
+            case "bar": qry = "SELECT add_date,SUM(amount) AS total FROM expenses WHERE user_name = $1 GROUP BY add_date";
+                break;
 
-        case "line" : qry = "SELECT DATE_TRUNC('week',add_date) AS week,SUM(amount) AS total FROM expenses WHERE user_name=$1 GROUP BY week";
-        break;
+            case "line": qry = "SELECT DATE_TRUNC('week',add_date) AS week,SUM(amount) AS total FROM expenses WHERE user_name=$1 GROUP BY week";
+                break;
 
-        case "pie" : qry = "SELECT SUM(amount) AS total, category FROM expenses WHERE user_name = $1 GROUP BY category ORDER BY category";
-        break;
+            case "pie": qry = "SELECT SUM(amount) AS total, category FROM expenses WHERE user_name = $1 GROUP BY category ORDER BY category";
+                break;
 
-        case "radar" : qry ="SELECT SUM(amount) AS total, category FROM expenses WHERE user_name = $1 GROUP BY category ORDER BY category";
-        break;
-    }
-    const result = await db.query(qry,[req.user.email]);
-    let baseUrl = "https://quickchart.io/chart?c=";
-    let chartUrl,label,data;
-    switch(type){
-        case "bar": label = result.rows.map(row => row.add_date.toISOString().split("T")[0]);
-         data = result.rows.map(row => row.total);
-        chartUrl = baseUrl + encodeURIComponent(JSON.stringify({
-            type : "bar",
-            data:{
-                labels:label,
-                datasets:[{
-                    label:"Expenses",
-                    backgroundColor:"rgba(85, 107, 47,0.8)",
-                    data:data,
-                }]
-            }
-        }));
-        break;
-        case "line":label = result.rows.map(row => row.week.toISOString().split("T")[0]);
-        data = result.rows.map(row => row.total);
-        chartUrl = baseUrl + encodeURIComponent(JSON.stringify({
-            type:"line",
-            data:{
-                labels:label,
-                datasets:[{
-                    label : "Expenses",
-                    backgroundColor:"rgba(85,107,47,0.2)",
-                    borderColor:"rgba(85,107,47,1)",
-                    data:data,
-                }]
-            }
-        }));
-        break;
-        case "pie" : label = result.rows.map(row => row.category);
-        data = result.rows.map(row => row.total);
-        chartUrl = baseUrl + encodeURIComponent(JSON.stringify({
-            type : "outlabeledPie",
-            data:{
-                labels:label,
-                datasets:[{
-                    backgroundColor:["rgba(85,107,47,1)","rgba(103, 107, 47, 1)","rgba(47, 107, 89, 1)","rgba(107, 59, 47, 1)","rgba(107, 47, 104, 1)"],
-                    data:data,
-                }]
-            },
-            "options":{
-                "plugins":{
-                    "outlabels":{
-                        "textcolor":"white",
+            case "radar": qry = "SELECT SUM(amount) AS total, category FROM expenses WHERE user_name = $1 GROUP BY category ORDER BY category";
+                break;
+        }
+        const result = await db.query(qry, [req.user.email]);
+        let baseUrl = "https://quickchart.io/chart?c=";
+        let chartUrl, label, data;
+        switch (type) {
+            case "bar": label = result.rows.map(row => row.add_date.toISOString().split("T")[0]);
+                data = result.rows.map(row => row.total);
+                chartUrl = baseUrl + encodeURIComponent(JSON.stringify({
+                    type: "bar",
+                    data: {
+                        labels: label,
+                        datasets: [{
+                            label: "Expenses",
+                            backgroundColor: "rgba(85, 107, 47,0.8)",
+                            data: data,
+                        }]
                     }
-                }
-            }
-        }));
-        break;
-        case "radar" : label = result.rows.map(row => row.category);
-        data = result.rows.map(row => row.total);
-        chartUrl = baseUrl + encodeURIComponent(JSON.stringify({
-            type:"radar",
-            data:{
-                labels:label,
-                datasets:[{
-                    label:"Expenses",
-                    data:data,
-                }]
-            }
-        }));
-        break;
+                }));
+                break;
+            case "line": label = result.rows.map(row => row.week.toISOString().split("T")[0]);
+                data = result.rows.map(row => row.total);
+                chartUrl = baseUrl + encodeURIComponent(JSON.stringify({
+                    type: "line",
+                    data: {
+                        labels: label,
+                        datasets: [{
+                            label: "Expenses",
+                            backgroundColor: "rgba(85,107,47,0.2)",
+                            borderColor: "rgba(85,107,47,1)",
+                            data: data,
+                        }]
+                    }
+                }));
+                break;
+            case "pie": label = result.rows.map(row => row.category);
+                data = result.rows.map(row => row.total);
+                chartUrl = baseUrl + encodeURIComponent(JSON.stringify({
+                    type: "outlabeledPie",
+                    data: {
+                        labels: label,
+                        datasets: [{
+                            backgroundColor: ["rgba(85,107,47,1)", "rgba(103, 107, 47, 1)", "rgba(47, 107, 89, 1)", "rgba(107, 59, 47, 1)", "rgba(107, 47, 104, 1)"],
+                            data: data,
+                        }]
+                    },
+                    "options": {
+                        "plugins": {
+                            "outlabels": {
+                                "textcolor": "white",
+                            }
+                        }
+                    }
+                }));
+                break;
+            case "radar": label = result.rows.map(row => row.category);
+                data = result.rows.map(row => row.total);
+                chartUrl = baseUrl + encodeURIComponent(JSON.stringify({
+                    type: "radar",
+                    data: {
+                        labels: label,
+                        datasets: [{
+                            label: "Expenses",
+                            data: data,
+                        }]
+                    }
+                }));
+                break;
 
-    }
-    const expensesResult = await db.query(
-        `SELECT amount, add_date, category, notes
+        }
+        const expensesResult = await db.query(
+            `SELECT amount, add_date, category, notes
          FROM expenses
          WHERE user_name = $1
          ORDER BY add_date DESC`,
-        [req.user.email]
-    );
-    const expenses = expensesResult.rows;
-    res.render("track.ejs",{
-        chartUrl,
-        mostSpentCategory : req.user.mostSpentCategory,
-        streak : req.user.streak,
-        tip : req.user.tip,
-        title : req.user.title,
-        expenses,
-    });
-}
-else{
-    res.redirect("/login");
-}
+            [req.user.email]
+        );
+        const expenses = expensesResult.rows;
+        res.render("track.ejs", {
+            chartUrl,
+            mostSpentCategory: req.user.mostSpentCategory,
+            streak: req.user.streak,
+            tip: req.user.tip,
+            title: req.user.title,
+            expenses,
+        });
+    }
+    else {
+        res.redirect("/login");
+    }
 });
 
-app.post("/verify",async (req,res)=>{
+app.post("/verify", async (req, res) => {
     let user_email = req.body.otp_email;
-    let otp = await otpGenerator.generate(6,{
-        upperCaseAlphabets:false,
-        specialChars:false,
+    let otp = await otpGenerator.generate(6, {
+        upperCaseAlphabets: false,
+        specialChars: false,
     });
     req.session.otp_generated = otp;
     transporter.sendMail({
-        from:process.env.EMAIL_USERNAME,
-        to:user_email,
-        subject:"Authentication Email",
-        html:`        <h1>OTP Authentication</h1><br>
+        from: process.env.EMAIL_USERNAME,
+        to: user_email,
+        subject: "Authentication Email",
+        html: `        <h1>OTP Authentication</h1><br>
         <p>We recieved your registration request for PennyPilot to process use this OTP:<b>${otp}</b> for verification</p>`
-    },(err,info)=>{
-        if(err)
-        {
-            console.log("Error in sending mail",err);
-            return res.json({msg : "Email address doesn't exisit"});
+    }, (err, info) => {
+        if (err) {
+            console.log("Error in sending mail", err);
+            return res.json({ msg: "Email address doesn't exisit" });
         }
-        else{
-            console.log("Email send:",info.response);
-            return res.json({msg:"OTP sent successfully"});
+        else {
+            console.log("Email send:", info.response);
+            return res.json({ msg: "OTP sent successfully" });
         }
     });
 
 });
 
-app.post("/signup",async(req,res)=>{
+app.post("/signup", async (req, res) => {
     let email = req.body.email;
     let password = req.body.password;
     let otp_entered = req.body.otp;
     console.log(otp_entered);
-    if(!req.session.otp_generated || otp_entered !== req.session.otp_generated){
+    if (!req.session.otp_generated || otp_entered !== req.session.otp_generated) {
         req.session.error = "Wrong OTP. Please try again";
         return res.redirect("/signup");
     }
-    let checkRes = await db.query("SELECT * FROM users WHERE email = $1",[email]);
-    if(checkRes.rows.length == 0){
-        let hash = await bcrypt.hash(password,10);
-        let result = await db.query("INSERT INTO users (email,password) VALUES($1,$2) RETURNING *",[email,hash]);
+    let checkRes = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+    if (checkRes.rows.length == 0) {
+        let hash = await bcrypt.hash(password, 10);
+        let result = await db.query("INSERT INTO users (email,password) VALUES($1,$2) RETURNING *", [email, hash]);
         let user = result.rows[0];
-        req.login(user,(err)=>{
-            if(err)
-                console.error("Error is:",err);
+        req.login(user, (err) => {
+            if (err)
+                console.error("Error is:", err);
             res.redirect("/update");
         });
     }
-    else{
+    else {
         let user = checkRes.rows[0];
-        req.login(user,(err)=>{
-            if(err)
-                console.error("Error is :",err);
+        req.login(user, (err) => {
+            if (err)
+                console.error("Error is :", err);
             res.redirect("/update");
         });
     }
@@ -371,27 +369,26 @@ app.post("/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
         if (err) return next(err);
         if (!user) {
-            req.flash("error", info.message); 
-            return res.redirect("/login"); 
+            req.flash("error", info.message);
+            return res.redirect("/login");
         }
         req.logIn(user, (err) => {
             if (err) return next(err);
-            return res.redirect("/update"); 
+            return res.redirect("/update");
         });
     })(req, res, next);
 });
 
 
-app.post("/update",async (req,res)=>{
-    let amount = parseInt(req.body.amount.replace(/,/g,""),10);
+app.post("/update", async (req, res) => {
+    let amount = parseInt(req.body.amount.replace(/,/g, ""), 10);
     let category = req.body.category;
     let date = req.body.date;
     let notes = req.body.notes;
-    if(req.isAuthenticated())
-    {
-        const idRes = await db.query(`SELECT id FROM users WHERE email = $1`,[req.user.email]);
+    if (req.isAuthenticated()) {
+        const idRes = await db.query(`SELECT id FROM users WHERE email = $1`, [req.user.email]);
         let id = idRes.rows[0].id;
-        const result = await db.query("INSERT INTO expenses(amount,category,add_date,notes,user_name,user_id) VALUES($1,$2,$3,$4,$5,$6) RETURNING *",[amount,category,date,notes,req.user.email,id]);
+        const result = await db.query("INSERT INTO expenses(amount,category,add_date,notes,user_name,user_id) VALUES($1,$2,$3,$4,$5,$6) RETURNING *", [amount, category, date, notes, req.user.email, id]);
         let streak = await db.query(`
             UPDATE users
             SET 
@@ -404,90 +401,151 @@ app.post("/update",async (req,res)=>{
             last_update = CURRENT_DATE
             WHERE email = $1
             RETURNING * 
-            `,[req.user.email]);
+            `, [req.user.email]);
         req.session.message = "Expenses added successfully!";
 
         res.redirect("/update");
     }
-    else{
+    else {
         res.redirect("/signup");
     }
 });
 
-app.post("/otp",async (req,res)=>{
+app.post("/otp", async (req, res) => {
     let email = req.body.email;
-    let result = await db.query("SELECT * FROM users WHERE email = $1",[email]);
-    if(result.rows.length == 0){
-        return res.json({msg : "No such user found"});
+    let result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+    if (result.rows.length == 0) {
+        return res.json({ msg: "No such user found" });
     }
-    else{
-        let otp = await otpGenerator.generate(6,{
-            upperCaseAlphabets : false,
+    else {
+        let otp = await otpGenerator.generate(6, {
+            upperCaseAlphabets: false,
             specialChars: false,
         });
         req.session.password_otp = otp;
         transporter.sendMail({
-            from:process.env.EMAIL_USERNAME,
-            to:email,
-            subject:"Password recovery",
-            html:`        <h1>Password Recovery</h1><br>
+            from: process.env.EMAIL_USERNAME,
+            to: email,
+            subject: "Password recovery",
+            html: `        <h1>Password Recovery</h1><br>
         <p>We recieved your request for password change to proceed further use this OTP: <h2><b>${otp}</b></h2> for password change</p>`
         });
-        return res.json({msg:"otp sent"});
+        return res.json({ msg: "otp sent" });
     }
 });
 
-app.post("/forgot",async (req,res) => {
+app.post("/forgot", async (req, res) => {
     let password = req.body.newPassword;
     let email = req.body.email;
     let otp_generated = req.session.password_otp;
     let otp_entered = req.body.otp_entered;
-    if(otp_generated.trim() == otp_entered.trim()){
-    let hash = await bcrypt.hash(password,10);
-    req.session.password_otp = null;
-    let result = await db.query(`UPDATE users SET password = $1 WHERE email = $2`,[hash,email]);
-    return res.json({msg:"Password changed successfully"});
+    if (otp_generated.trim() == otp_entered.trim()) {
+        let hash = await bcrypt.hash(password, 10);
+        req.session.password_otp = null;
+        let result = await db.query(`UPDATE users SET password = $1 WHERE email = $2`, [hash, email]);
+        return res.json({ msg: "Password changed successfully" });
     }
-    else{
-        return res.json({msg : "Invalid OTP"});
+    else {
+        return res.json({ msg: "Invalid OTP" });
     }
 
 });
 
-passport.use("local",new Strategy(async function verify(username,password,cb){
-    try{
-    const checkRes = await db.query("SELECT * FROM users WHERE email = $1",[username]);
-    if(checkRes.rows.length === 0){
-        console.log("No user found");
-        return cb(null,false,{message : "No user found with this email"});
-    }
-    else{
-        let user = checkRes.rows[0];
-        let valid = await bcrypt.compare(password,user.password);
-        if(valid){
-            console.log("Passwords matched");
-            return cb(null,user);
+passport.use("local", new Strategy(async function verify(username, password, cb) {
+    try {
+        const checkRes = await db.query("SELECT * FROM users WHERE email = $1", [username]);
+        if (checkRes.rows.length === 0) {
+            console.log("No user found");
+            return cb(null, false, { message: "No user found with this email" });
         }
-        else{
-            console.log("Passwords not matched");
-            return cb(null,false,{message : "Passwords doesn't match"});
+        else {
+            let user = checkRes.rows[0];
+            let valid = await bcrypt.compare(password, user.password);
+            if (valid) {
+                console.log("Passwords matched");
+                return cb(null, user);
+            }
+            else {
+                console.log("Passwords not matched");
+                return cb(null, false, { message: "Passwords doesn't match" });
+            }
         }
     }
-}
-catch(err){
-    console.log("Verification error");
-    console.error("Error:",err);
-    return cb(err);
-}
+    catch (err) {
+        console.log("Verification error");
+        console.error("Error:", err);
+        return cb(err);
+    }
 }));
 
-passport.serializeUser((user,cb)=>{
-    return cb(null,user);
+passport.serializeUser((user, cb) => {
+    return cb(null, user);
 });
-passport.deserializeUser((user,cb)=>{
-    return cb(null,user);
+passport.deserializeUser((user, cb) => {
+    return cb(null, user);
 });
 
-app.listen(port,(req,res)=>{
+app.get("/cron/send-daily-reminders", async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    const requestKey = req.query.key;
+
+    // Security check
+    if (!cronSecret || requestKey !== cronSecret) {
+        console.warn("Unauthorized cron attempt detected.");
+        return res.status(403).json({ error: "Unauthorized: Invalid or missing secret key" });
+    }
+
+    console.log("Running daily expense reminder job...");
+    try {
+        const result = await db.query("SELECT email FROM users");
+        const users = result.rows;
+
+        const emailPromises = users.map(user => {
+            if (!user.email) return Promise.resolve();
+
+            const mailOptions = {
+                from: process.env.EMAIL_USERNAME,
+                to: user.email,
+                subject: "🔔 Time to Track Your Expenses - PennyPilot",
+                html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+                    <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #4CAF50;">
+                        <h1 style="color: #4CAF50; margin: 0;">PennyPilot</h1>
+                        <p style="color: #666; font-size: 14px;">Your Personal Finance Assistant</p>
+                    </div>
+                    <div style="padding: 20px 0; text-align: center;">
+                        <h2 style="color: #333;">Did you spend anything today?</h2>
+                        <p style="font-size: 16px; color: #555; line-height: 1.5;">
+                            Consistently tracking your expenses is the key to financial freedom. 
+                            Take a moment to log your daily spending and keep your streak alive!
+                        </p>
+                        <a href="https://penny-pilot-lu7t.onrender.com/login" 
+                           style="display: inline-block; margin-top: 20px; padding: 12px 25px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+                           Track Expenses Now
+                        </a>
+                    </div>
+                    <div style="text-align: center; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #999;">
+                        <p>&copy; ${new Date().getFullYear()} PennyPilot. All rights reserved.</p>
+                        <p>You received this email because you are a registered user of PennyPilot.</p>
+                    </div>
+                </div>
+                `
+            };
+
+            return transporter.sendMail(mailOptions)
+                .then(() => console.log(`Reminder sent to ${user.email}`))
+                .catch(err => console.error(`Failed to send to ${user.email}`, err));
+        });
+
+        await Promise.all(emailPromises);
+        res.status(200).json({ message: "Daily reminders processed successfully" });
+
+    } catch (err) {
+        console.error("Error in reminder job:", err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+app.listen(port, (req, res) => {
     console.log(`Server running on ${port}`);
 })
