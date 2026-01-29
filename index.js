@@ -43,18 +43,7 @@ app.use((req, res, next) => {
     next();
 });
 
-const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // Use STARTTLS
-    pool: true, // Keep connection open
-    maxConnections: 1, // Conservative limit to prevent timeout
-    rateLimit: 1, // Send 1 email per second max
-    auth: {
-        user: process.env.EMAIL_USERNAME,
-        pass: process.env.PASS,
-    }
-});
+
 
 app.get("/", (req, res) => {
     res.render("index.ejs");
@@ -490,6 +479,41 @@ passport.deserializeUser((user, cb) => {
     return cb(null, user);
 });
 
+
+// Helper function to send email via Brevo API
+const sendEmail = async (to, subject, htmlContent) => {
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) {
+        console.error("BREVO_API_KEY is missing");
+        return;
+    }
+
+    try {
+        const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+            method: "POST",
+            headers: {
+                "accept": "application/json",
+                "api-key": apiKey,
+                "content-type": "application/json"
+            },
+            body: JSON.stringify({
+                sender: { email: process.env.EMAIL_USERNAME, name: "PennyPilot" },
+                to: [{ email: to }],
+                subject: subject,
+                htmlContent: htmlContent
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Brevo API Error: ${JSON.stringify(errorData)}`);
+        }
+        console.log(`Email sent to ${to} via Brevo`);
+    } catch (error) {
+        console.error(`Failed to send email to ${to}:`, error.message);
+    }
+};
+
 app.get("/cron/send-daily-reminders", async (req, res) => {
     const cronSecret = process.env.CRON_SECRET;
     const requestKey = req.query.key;
@@ -505,20 +529,15 @@ app.get("/cron/send-daily-reminders", async (req, res) => {
         const result = await db.query("SELECT email FROM users");
         const users = result.rows;
 
-
         // FIRE AND FORGET: Do not await the emails.
         // Send response immediately so the cron job doesn't timeout.
-        res.status(200).json({ message: "Daily reminders triggered. Emails are sending in the background." });
+        res.status(200).json({ message: "Daily reminders triggered. Emails are sending in the background via Brevo." });
 
         // Process emails in background
-        const emailPromises = users.map(user => {
-            if (!user.email) return Promise.resolve();
+        users.forEach(async (user) => {
+            if (!user.email) return;
 
-            const mailOptions = {
-                from: process.env.EMAIL_USERNAME,
-                to: user.email,
-                subject: "🔔 Time to Track Your Expenses - PennyPilot",
-                html: `
+            const htmlContent = `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
                     <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #4CAF50;">
                         <h1 style="color: #4CAF50; margin: 0;">PennyPilot</h1>
@@ -540,19 +559,13 @@ app.get("/cron/send-daily-reminders", async (req, res) => {
                         <p>You received this email because you are a registered user of PennyPilot.</p>
                     </div>
                 </div>
-                `
-            };
+            `;
 
-            return transporter.sendMail(mailOptions)
-                .then(() => console.log(`Reminder sent to ${user.email}`))
-                .catch(err => console.error(`Failed to send to ${user.email}`, err));
+            await sendEmail(user.email, "🔔 Time to Track Your Expenses - PennyPilot", htmlContent);
         });
-
-        Promise.all(emailPromises).then(() => console.log("All emails processed in background."));
 
     } catch (err) {
         console.error("Error in reminder job:", err);
-        // If we already sent a response, this does nothing, which is fine for background jobs
         if (!res.headersSent) res.status(500).json({ error: "Internal server error" });
     }
 });
