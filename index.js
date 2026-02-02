@@ -37,6 +37,7 @@ app.use(passport.session());
 
 app.use(flash());
 app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.locals.error = req.flash("error");
     res.locals.isAuthenticated = req.isAuthenticated();
     next();
@@ -81,12 +82,20 @@ app.get("/profile", async (req, res) => {
 });
 
 app.get("/signup", (req, res) => {
-    res.render("signup.ejs", { error: req.session.error });
-    req.session.error = null;
+    if (req.isAuthenticated()) {
+        res.redirect("/update");
+    } else {
+        res.render("signup.ejs", { error: req.session.error });
+        req.session.error = null;
+    }
 });
 
 app.get("/login", (req, res) => {
-    res.render("login.ejs");
+    if (req.isAuthenticated()) {
+        res.redirect("/update");
+    } else {
+        res.render("login.ejs");
+    }
 });
 
 app.get("/track", async (req, res) => {
@@ -505,7 +514,7 @@ app.post("/forgot", async (req, res) => {
 
 passport.use("local", new Strategy(async function verify(username, password, cb) {
     try {
-        const checkRes = await db.query("SELECT * FROM users WHERE email = $1", [username]);
+        const checkRes = await db.query("SELECT * FROM users WHERE email = $1 OR usr_name = $1 OR email = $1 || '@gmail.com'", [username]);
         if (checkRes.rows.length === 0) {
             console.log("No user found");
             return cb(null, false, { message: "No user found with this email" });

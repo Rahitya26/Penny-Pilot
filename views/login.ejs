@@ -1,40 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <%- include("partials/header.ejs") %>
-    <main>
-        <div class="login-cont">
-            <div class="login-box">
-                <form action="/login" method="post">
-                    <h2>PennyPilot</h2>
-                    <p>Email</p>
-                    <input type="email" name="username" placeholder="example@gamil.com" autofocus required>
-                    <p>Password</p>
-                    <input type="password" name="password" id="pass" required>
-                    <div class="togglepass">
-                        <label for="showpass"><p>Show password</p></label>
-                        <input type="checkbox"  id="showpass">
-                    </div>
-                    <a href="/forgot">Forgot password?</a>
-                    <% if(error.length>0){ %>
-                    <span><%= error %></span>
-                    <% } %>
-                    <div class="login-btn"><button type="submit">Submit</button></div>
-                </form>     
+        <main>
+            <div class="login-cont">
+                <div class="login-box">
+                    <form action="/login" method="post">
+                        <h2>PennyPilot</h2>
+                        <p>Email or Username</p>
+                        <input type="text" name="username" placeholder="example@gmail.com or username" autofocus
+                            required>
+                        <p>Password</p>
+                        <input type="password" name="password" id="pass" required>
+                        <div class="togglepass">
+                            <label for="showpass">
+                                <p>Show password</p>
+                            </label>
+                            <input type="checkbox" id="showpass">
+                        </div>
+                        <a href="/forgot">Forgot password?</a>
+                        <% if(error.length>0){ %>
+                            <span>
+                                <%= error %>
+                            </span>
+                            <% } %>
+                                <div class="login-btn"><button type="submit">Submit</button></div>
+                    </form>
+                </div>
             </div>
-        </div>
-    </main>
-    <script>
-        document.getElementById('showpass').addEventListener('change',function(){
-            let pass = document.getElementById("pass");
-            pass.type = this.checked ? "text" : "password";
-        });
-    </script>
+        </main>
+        <script>
+            document.getElementById('showpass').addEventListener('change', function () {
+                let pass = document.getElementById("pass");
+                pass.type = this.checked ? "text" : "password";
+            });
+        </script>
 </body>
+
 </html>
