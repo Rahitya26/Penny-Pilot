@@ -1,0 +1,16 @@
+{
+    "name": "PennyPilot",
+    "short_name": "PennyPilot",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#2F4B26",
+    "theme_color": "#B5b25C",
+    "description": "Navigate your spending with PennyPilot. Track expenses and budget smarter.",
+    "icons": [
+        {
+            "src": "/images/favicon.png",
+            "sizes": "any",
+            "type": "image/png"
+        }
+    ]
+}
