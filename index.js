@@ -6,7 +6,6 @@ import pg from "pg";
 import passport from "passport";
 import env from "dotenv";
 import { Strategy } from "passport-local";
-import nodemailer from "nodemailer";
 import otpGenerator from "otp-generator";
 import flash from "connect-flash";
 
@@ -58,6 +57,27 @@ app.get("/update", (req, res) => {
     else {
         res.redirect("/login");
     }
+});
+
+app.get("/profile", async (req, res) => {
+    let user = req.user;
+    if (!user) return res.redirect("/login");
+
+    let result = await db.query("SELECT SUM(amount) AS TOTAL_EXPENSE FROM expenses WHERE user_id = $1", [user.id]);
+    let total_expense = result.rows[0].total_expense || 0;
+
+    let category_res = await db.query("SELECT SUM(amount) AS TOTAL,category FROM expenses WHERE user_id = $1 GROUP BY category ORDER BY TOTAL DESC LIMIT 1", [user.id]);
+
+    let most_spent = "No Data";
+    let most_spent_amount = 0;
+
+    if (category_res.rows.length > 0) {
+        most_spent = category_res.rows[0].category;
+        most_spent_amount = category_res.rows[0].total;
+    }
+
+    console.log(user);
+    res.render("profile.ejs", { user, total_expense, most_spent, most_spent_amount });
 });
 
 app.get("/signup", (req, res) => {
@@ -308,8 +328,31 @@ app.post("/verify", async (req, res) => {
         specialChars: false,
     });
     req.session.otp_generated = otp;
-    await sendEmail(user_email, "Authentication Email", `        <h1>OTP Authentication</h1><br>
-        <p>We recieved your registration request for PennyPilot to process use this OTP:<b>${otp}</b> for verification</p>`);
+    const htmlContent = `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; overflow: hidden;">
+            <div style="background-color: #2F4B26; padding: 30px 20px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 1px;">PennyPilot</h1>
+                <p style="color: #B5b25C; margin: 5px 0 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Your Personal Finance Assistant</p>
+            </div>
+            <div style="padding: 40px 30px; text-align: center; color: #333333;">
+                <h2 style="color: #2F4B26; margin-top: 0;">Verify Your Email</h2>
+                <p style="font-size: 16px; line-height: 1.6; color: #555555; margin-bottom: 30px;">
+                    Thank you for signing up with PennyPilot! To complete your registration and start tracking your expenses, please use the following One-Time Password (OTP).
+                </p>
+                <div style="background-color: #f4f7f2; display: inline-block; padding: 15px 30px; border-radius: 8px; border: 2px dashed #B5b25C; margin-bottom: 30px;">
+                    <span style="font-size: 32px; font-weight: bold; color: #2F4B26; letter-spacing: 5px;">${otp}</span>
+                </div>
+                <p style="font-size: 14px; color: #888888; margin-bottom: 0;">
+                    This OTP is valid for 10 minutes. Please do not share this code with anyone.
+                </p>
+            </div>
+            <div style="background-color: #2F4B26; padding: 20px; text-align: center; font-size: 12px; color: #a0c29a;">
+                <p style="margin: 0;">&copy; ${new Date().getFullYear()} PennyPilot. All rights reserved.</p>
+                <p style="margin: 5px 0 0 0;">Secure Expense Tracking | Financial Freedom</p>
+            </div>
+        </div>
+    `;
+    await sendEmail(user_email, "PennyPilot Account Verification", htmlContent);
 
     return res.json({ msg: "OTP sent successfully" });
 
@@ -317,6 +360,7 @@ app.post("/verify", async (req, res) => {
 
 app.post("/signup", async (req, res) => {
     let email = req.body.email;
+    let usr_name = req.body.usr_name;
     let password = req.body.password;
     let otp_entered = req.body.otp;
     console.log(otp_entered);
@@ -327,7 +371,7 @@ app.post("/signup", async (req, res) => {
     let checkRes = await db.query("SELECT * FROM users WHERE email = $1", [email]);
     if (checkRes.rows.length == 0) {
         let hash = await bcrypt.hash(password, 10);
-        let result = await db.query("INSERT INTO users (email,password) VALUES($1,$2) RETURNING *", [email, hash]);
+        let result = await db.query("INSERT INTO users (email,password,usr_name) VALUES($1,$2,$3) RETURNING *", [email, hash, usr_name]);
         let user = result.rows[0];
         req.login(user, (err) => {
             if (err)
@@ -405,20 +449,51 @@ app.post("/otp", async (req, res) => {
             specialChars: false,
         });
         req.session.password_otp = otp;
-        await sendEmail(email, "Password recovery", `        <h1>Password Recovery</h1><br>
-        <p>We recieved your request for password change to proceed further use this OTP: <h2><b>${otp}</b></h2> for password change</p>`);
+        req.session.reset_email = email; // Securely bind OTP to this email
+
+        const htmlContent = `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; overflow: hidden;">
+                <div style="background-color: #B5b25C; padding: 30px 20px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 1px;">PennyPilot</h1>
+                    <p style="color: #2F4B26; margin: 5px 0 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Your Personal Finance Assistant</p>
+                </div>
+                <div style="padding: 40px 30px; text-align: center; color: #333333;">
+                    <h2 style="color: #2F4B26; margin-top: 0;">Password Recovery</h2>
+                    <p style="font-size: 16px; line-height: 1.6; color: #555555; margin-bottom: 30px;">
+                        We received a request to reset your password. Use the following OTP to proceed.
+                    </p>
+                    <div style="background-color: #f9f9f9; display: inline-block; padding: 15px 30px; border-radius: 8px; border: 2px dashed #2F4B26; margin-bottom: 30px;">
+                        <span style="font-size: 32px; font-weight: bold; color: #B5b25C; letter-spacing: 5px;">${otp}</span>
+                    </div>
+                    <p style="font-size: 14px; color: #888888; margin-bottom: 0;">
+                        If you didn't request this change, you can safely ignore this email.
+                    </p>
+                </div>
+                <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px; color: #999999;">
+                    <p style="margin: 0;">&copy; ${new Date().getFullYear()} PennyPilot. All rights reserved.</p>
+                </div>
+            </div>
+        `;
+        await sendEmail(email, "PennyPilot Password Reset", htmlContent);
         return res.json({ msg: "otp sent" });
     }
 });
 
 app.post("/forgot", async (req, res) => {
     let password = req.body.newPassword;
-    let email = req.body.email;
+    // SECURITY FIX: Ignore req.body.email, use session email
+    let email = req.session.reset_email;
     let otp_generated = req.session.password_otp;
     let otp_entered = req.body.otp_entered;
+
+    if (!email || !otp_generated) {
+        return res.json({ msg: "Session expired or invalid request. Please request OTP again." });
+    }
+
     if (otp_generated.trim() == otp_entered.trim()) {
         let hash = await bcrypt.hash(password, 10);
         req.session.password_otp = null;
+        req.session.reset_email = null; // Clear session data
         let result = await db.query(`UPDATE users SET password = $1 WHERE email = $2`, [hash, email]);
         return res.json({ msg: "Password changed successfully" });
     }
@@ -487,11 +562,12 @@ const sendEmail = async (to, subject, htmlContent) => {
             })
         });
 
+        const data = await response.json();
+
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Brevo API Error: ${JSON.stringify(errorData)}`);
+            throw new Error(`Brevo API Error: ${JSON.stringify(data)}`);
         }
-        console.log(`Email sent to ${to} via Brevo`);
+        console.log(`Email sent to ${to} via Brevo. MessageId: ${data.messageId}`);
     } catch (error) {
         console.error(`Failed to send email to ${to}:`, error.message);
     }
@@ -549,6 +625,69 @@ app.get("/cron/send-daily-reminders", async (req, res) => {
 
     } catch (err) {
         console.error("Error in reminder job:", err);
+        if (!res.headersSent) res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+app.get("/announce-profile", async (req, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    const requestKey = req.query.key;
+
+    // Security check
+    if (!cronSecret || requestKey !== cronSecret) {
+        console.warn("Unauthorized announcement attempt detected.");
+        return res.status(403).json({ error: "Unauthorized: Invalid or missing secret key" });
+    }
+
+    console.log("Sending feature announcement emails...");
+    try {
+        const result = await db.query("SELECT email FROM users");
+        const users = result.rows;
+
+        // Send response immediately
+        res.status(200).json({ message: "Feature announcement triggered. Emails are sending in the background." });
+
+        users.forEach(async (user) => {
+            if (!user.email) return;
+
+            const htmlContent = `
+                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; overflow: hidden;">
+                    <div style="background-color: #2F4B26; padding: 30px 20px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 1px;">PennyPilot</h1>
+                        <p style="color: #B5b25C; margin: 5px 0 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Your Personal Finance Assistant</p>
+                    </div>
+                    <div style="padding: 40px 30px; text-align: center; color: #333333;">
+                        <h2 style="color: #2F4B26; margin-top: 0;">🚀 New Feature Alert: Your Financial Profile!</h2>
+                        <p style="font-size: 16px; line-height: 1.6; color: #555555; margin-bottom: 25px;">
+                            We've upgraded your PennyPilot experience! You can now view your personalized financial profile to get a snapshot of your spending habits.
+                        </p>
+                        
+                        <div style="background-color: #f4f7f2; border-left: 4px solid #B5b25C; padding: 20px; text-align: left; margin-bottom: 30px; border-radius: 4px;">
+                            <h3 style="margin: 0 0 10px 0; color: #2F4B26;">What's New?</h3>
+                            <ul style="margin: 0; padding-left: 20px; color: #555;">
+                                <li style="margin-bottom: 8px;">🔥 <strong>Streak Tracking:</strong> Keep your momentum going!</li>
+                                <li style="margin-bottom: 8px;">💰 <strong>Total Expense Overview:</strong> See your lifetime spending at a glance.</li>
+                                <li style="margin-bottom: 0;">📊 <strong>Top Category:</strong> Identify where most of your money goes.</li>
+                            </ul>
+                        </div>
+
+                        <a href="https://penny-pilot-lu7t.onrender.com/profile" 
+                           style="display: inline-block; padding: 14px 30px; background-color: #B5b25C; color: white; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(181, 178, 92, 0.4); transition: transform 0.2s;">
+                           Check My Profile
+                        </a>
+                    </div>
+                    <div style="background-color: #2F4B26; padding: 20px; text-align: center; font-size: 12px; color: #a0c29a;">
+                        <p style="margin: 0;">&copy; ${new Date().getFullYear()} PennyPilot. All rights reserved.</p>
+                        <p style="margin: 5px 0 0 0;">You are receiving this because you are a valued member of our community.</p>
+                    </div>
+                </div>
+            `;
+
+            await sendEmail(user.email, "🚀 Check out your new Financial Profile!", htmlContent);
+        });
+
+    } catch (err) {
+        console.error("Error in announcement job:", err);
         if (!res.headersSent) res.status(500).json({ error: "Internal server error" });
     }
 });
