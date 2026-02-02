@@ -1,73 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Track your data</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="/images/favicon.png" type="image/png">
 </head>
 <%- include("partials/header.ejs") %>
-<main>
-    <div class="track-cont">
-        <div class="insights mini">
-            <h2>Personalized Insights</h2>
-            <p>Whoa! Your spending habits reveal that most of your expenses are going toward <span><%=mostSpentCategory %></span>. It looks like this category is taking the biggest bite out of your budget! Maybe it's time to rethink your priorities? 💰📊</p>
-        </div>
-        <div class="streak mini">
-            <h2>Gamification & Streaks</h2>
-            <p>You've logged expenses for <span><%=streak %><% if(streak > 1){ %> days<% }else{%> day<% } %></span> in a row! Keep going!</p>
-        </div>
-        <div class="tips mini">
-            <h2><%= title %></h2>
-            <p><%= tip %></p>
-        </div>
-        <div class="graph">
-            <h3>Graphical View</h3>
-            <% if (locals.chartUrl){ %>
-                <img src=<%=chartUrl %> alt="chart">
-                <% } %>
-                    <form action="/track" method="post">
-                        <select name="type" id="type" required>
-                            <option disabled selected>Select a category</option>
-                            <option value="bar">Bar</option>
-                            <option value="line">Line</option>
-                            <option value="pie">Pie</option>
-                            <option value="radar">Radar</option>
-                        </select>
-                        <button type="submit">Generate</button>
-                    </form>
-        </div>
+    <main>
+        <div class="track-cont">
+            <div class="insights mini">
+                <h2>Personalized Insights</h2>
+                <p>Whoa! Your spending habits reveal that most of your expenses are going toward <span>
+                        <%=mostSpentCategory %>
+                    </span>. It looks like this category is taking the biggest bite out of your budget! Maybe it's time
+                    to rethink your priorities? 💰📊</p>
+            </div>
+            <div class="streak mini">
+                <h2>Gamification & Streaks</h2>
+                <p>You've logged expenses for <span>
+                        <%=streak %>
+                            <% if(streak> 1){ %> days<% }else{%> day<% } %>
+                    </span> in a row! Keep going!</p>
+            </div>
+            <div class="tips mini">
+                <h2>
+                    <%= title %>
+                </h2>
+                <p>
+                    <%= tip %>
+                </p>
+            </div>
+            <div class="graph">
+                <h3>Graphical View</h3>
+                <% if (locals.chartUrl){ %>
+                    <img src=<%=chartUrl %> alt="chart">
+                    <% } %>
+                        <form action="/track" method="post">
+                            <select name="type" id="type" required>
+                                <option disabled selected>Select a category</option>
+                                <option value="bar">Bar</option>
+                                <option value="line">Line</option>
+                                <option value="pie">Pie</option>
+                                <option value="radar">Radar</option>
+                            </select>
+                            <button type="submit">Generate</button>
+                        </form>
+            </div>
 
-        <div class="expenses-card">
-            <h3>Recent Expenses</h3>
-            <% if (expenses && expenses.length) { %>
-                <div class="table-wrapper">
-                    <table class="expenses-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Expense</th>
-                                <th>Type</th>
-                                <th>Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% expenses.forEach(function(expense){ %>
+            <div class="expenses-card">
+                <h3>Recent Expenses</h3>
+                <% if (expenses && expenses.length) { %>
+                    <div class="table-wrapper">
+                        <table class="expenses-table">
+                            <thead>
                                 <tr>
-                                    <td><%= expense.add_date.toISOString().split("T")[0] %></td>
-                                    <td>₹ <%= expense.amount %></td>
-                                    <td><%= expense.category %></td>
-                                    <td><%= expense.notes || "-" %></td>
+                                    <th>Date</th>
+                                    <th>Expense</th>
+                                    <th>Type</th>
+                                    <th>Notes</th>
                                 </tr>
-                            <% }) %>
-                        </tbody>
-                    </table>
-                </div>
-            <% } else { %>
-                <p class="no-expenses">No expenses recorded yet. Start adding your expenses to see them here.</p>
-            <% } %>
+                            </thead>
+                            <tbody>
+                                <% expenses.forEach(function(expense){ %>
+                                    <tr>
+                                        <td>
+                                            <%= expense.add_date.toISOString().split("T")[0] %>
+                                        </td>
+                                        <td>₹ <%= expense.amount %>
+                                        </td>
+                                        <td>
+                                            <%= expense.category %>
+                                        </td>
+                                        <td>
+                                            <%= expense.notes || "-" %>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% } else { %>
+                        <p class="no-expenses">No expenses recorded yet. Start adding your expenses to see them here.
+                        </p>
+                        <% } %>
+            </div>
         </div>
-    </div>
-    <%- include("partials/footer.ejs") %>
-</main>
+        <%- include("partials/footer.ejs") %>
+    </main>
+
 </html>
