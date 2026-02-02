@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <%- include("partials/header.ejs") %>
+        <main>
+            <div class="profile-container">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <img src="/images/profile.svg" alt="User Avatar">
+                        </div>
+                        <h1 class="profile-name">
+                            <%= user.usr_name %>
+                        </h1>
+                        <p class="profile-email">
+                            <%= user.email %>
+                        </p>
+                    </div>
+
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">
+                                <%= user.update_streak || 0 %>
+                            </span>
+                            <span class="stat-label">Day Streak 🔥</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">₹<%= total_expense || 0 %></span>
+                            <span class="stat-label">Total Spent</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">
+                                <%= most_spent || 'N/A' %>
+                            </span>
+                            <span class="stat-label">Top Category</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-actions">
+                        <a href="/update" class="btn-primary">Add Expense</a>
+                        <a href="/track" class="btn-secondary">View Analytics</a>
+                        <a href="/logout" class="btn-danger">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <%- include("partials/footer.ejs") %>
+</body>
+
+</html>

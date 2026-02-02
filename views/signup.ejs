@@ -1,88 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SignUP / Login</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <%- include("partials/header.ejs") %>
-    <main>
-        <div class="signupcont">
-            <div class="local">
-                <div class="reg">
-                    <h3>Register</h3>
+        <main>
+            <div class="signupcont">
+                <div class="local">
+                    <div class="reg">
+                        <h3>Register</h3>
                         <p>Email</p>
                         <input type="text" class="otp_email" required autofocus placeholder="example@gmail.com">
                         <span></span>
                         <div class="btncont">
                             <button class="sendOTP" onclick="sendOTP()">Send OTP</button>
                         </div>
-                    <form action="/signup" method="post">
-                        <p>OTP (Check spam folder)</p>
-                        <input type="hidden" name="email" id="email" placeholder="example@gmail.com" required autofocus>
-                        <input type="text" name="otp" required placeholder="Enter OTP">
-                        <p>Password</p>
-                        <input type="password" id="pass" required>
-                        <p>Confirm Password</p>
-                        <input type="password" name="password" id="confirm" required>
-                        <div class="togglepass">
-                            <label for="showpass"><p>Show password</p></label>
-                            <input type="checkbox"  id="showpass">
-                        </div>
-                        <% if(error){ %>
-                        <span><%= error %></span>
-                        <% } %>
-                        <div class="btncont">
-                            <button type="submit">Sign-Up</button>
-                        </div>
-                    </form>
+                        <form action="/signup" method="post">
+                            <p>OTP (Check spam folder)</p>
+                            <input type="hidden" name="email" id="email" placeholder="example@gmail.com" required
+                                autofocus>
+                            <input type="text" name="otp" required placeholder="Enter OTP">
+                            <p>Username</p>
+                            <input type="text" name="usr_name" id="usr_name" placeholder="Enter your name" required>
+                            <p>Password</p>
+                            <input type="password" id="pass" required>
+                            <p>Confirm Password</p>
+                            <input type="password" name="password" id="confirm" required>
+                            <div class="togglepass">
+                                <label for="showpass">
+                                    <p>Show password</p>
+                                </label>
+                                <input type="checkbox" id="showpass">
+                            </div>
+                            <% if(error){ %>
+                                <span>
+                                    <%= error %>
+                                </span>
+                                <% } %>
+                                    <div class="btncont">
+                                        <button type="submit">Sign-Up</button>
+                                    </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
-    </main>
-    <%- include("partials/footer.ejs") %>
-    <script>
-        //Showing passwords 
-        document.getElementById('showpass').addEventListener('change',function(){
-            let pass = document.getElementById("pass");
-            let confirm = document.getElementById("confirm");
-            pass.type = this.checked ? "text" : "password";
-            confirm.type = this.checked ? "text" : "password";
-        });
-        // Confirm passwords matching
-        document.querySelector("form[action='/signup']").addEventListener("submit", function (event) {
-        let pass = document.getElementById("pass").value;
-        let confirm = document.getElementById("confirm").value;
+        </main>
+        <%- include("partials/footer.ejs") %>
+            <script>
+                //Showing passwords 
+                document.getElementById('showpass').addEventListener('change', function () {
+                    let pass = document.getElementById("pass");
+                    let confirm = document.getElementById("confirm");
+                    pass.type = this.checked ? "text" : "password";
+                    confirm.type = this.checked ? "text" : "password";
+                });
+                // Confirm passwords matching
+                document.querySelector("form[action='/signup']").addEventListener("submit", function (event) {
+                    let pass = document.getElementById("pass").value;
+                    let confirm = document.getElementById("confirm").value;
 
-        if (pass !== confirm) {
-            alert("Passwords do not match!"); 
-            event.preventDefault(); 
-        }
-    });
+                    if (pass !== confirm) {
+                        alert("Passwords do not match!");
+                        event.preventDefault();
+                    }
+                });
 
-    // Send otp mail
-    function sendOTP(){
-            let email = document.querySelector(".otp_email").value;
-            fetch("/verify",{
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json"
-                },
-                body:JSON.stringify({otp_email : email}),
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log("OTP sent to backend");
-                document.querySelector("span").innerText = data.msg;
-            })
-            .catch(err=>console.log(err));
-        }
-        // Fixing mail value
-        document.querySelector(".otp_email").addEventListener("input",function(){
-            document.getElementById("email").value = this.value;
-        })
-    </script>
+                // Send otp mail
+                function sendOTP() {
+                    let email = document.querySelector(".otp_email").value;
+                    fetch("/verify", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ otp_email: email }),
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            console.log("OTP sent to backend");
+                            document.querySelector("span").innerText = data.msg;
+                        })
+                        .catch(err => console.log(err));
+                }
+                // Fixing mail value
+                document.querySelector(".otp_email").addEventListener("input", function () {
+                    document.getElementById("email").value = this.value;
+                })
+            </script>
 </body>
+
 </html>

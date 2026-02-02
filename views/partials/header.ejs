@@ -1,33 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <nav>
         <input type="checkbox" id="sidebar">
         <label for="sidebar" class="overlay"></label>
         <label for="sidebar" class="open">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f">
+                <path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z" />
+            </svg>
         </label>
         <div class="links">
             <label for="sidebar" class="close">
-                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                    fill="#1f1f1f">
+                    <path
+                        d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+                </svg>
             </label>
             <a href="/" class="homeLogo">PennyPilot</a>
-            <% if (typeof isAuthenticated !== 'undefined' && isAuthenticated) { %>
+            <% if (typeof isAuthenticated !=='undefined' && isAuthenticated) { %>
                 <a href="/update">Update Expenses</a>
                 <a href="/track">Track data</a>
+                <a href="/profile">Profile</a>
                 <a href="/logout">Logout</a>
-            <% } else { %>
-                <a href="/track">Track data</a>
-                <a href="/signup">Sign-Up</a>
-                <a href="/login">Login</a>
-            <% } %>
+                <% } else { %>
+                    <a href="/track">Track data</a>
+                    <a href="/signup">Sign-Up</a>
+                    <a href="/login">Login</a>
+                    <% } %>
         </div>
     </nav>
 </body>
+
 </html>
