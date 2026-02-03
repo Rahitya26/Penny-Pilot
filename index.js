@@ -186,7 +186,7 @@ app.get("/track", async (req, res) => {
             `SELECT amount, add_date, category, notes
          FROM expenses
          WHERE user_name = $1
-         ORDER BY add_date DESC`,
+         ORDER BY add_date DESC, id DESC LIMIT 5`,
             [req.user.email]
         );
         const expenses = expensesResult.rows;
@@ -204,6 +204,22 @@ app.get("/track", async (req, res) => {
         });
     }
     else {
+        res.redirect("/login");
+    }
+});
+
+app.get("/history", async (req, res) => {
+    if (req.isAuthenticated()) {
+        const expensesResult = await db.query(
+            `SELECT amount, add_date, category, notes
+         FROM expenses
+         WHERE user_name = $1
+         ORDER BY add_date DESC, id DESC`,
+            [req.user.email]
+        );
+        const expenses = expensesResult.rows;
+        res.render("history.ejs", { expenses });
+    } else {
         res.redirect("/login");
     }
 });
@@ -312,7 +328,7 @@ app.post("/track", async (req, res) => {
             `SELECT amount, add_date, category, notes
          FROM expenses
          WHERE user_name = $1
-         ORDER BY add_date DESC`,
+         ORDER BY add_date DESC, id DESC LIMIT 5`,
             [req.user.email]
         );
         const expenses = expensesResult.rows;
@@ -582,6 +598,80 @@ const sendEmail = async (to, subject, htmlContent) => {
     }
 };
 
+app.get("/cron/monthly-report", async (req, res) => {
+
+
+    try {
+        const result = await db.query("SELECT * FROM users");
+        const users = result.rows;
+        res.status(200).json({ message: "Monthly reports triggered." });
+
+        for (const user of users) {
+            if (!user.email) continue;
+
+            // Get first and last day of current month
+            const date = new Date();
+            const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+            const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+
+            // 1. Total Spent
+            const totalRes = await db.query(
+                "SELECT SUM(amount) as total FROM expenses WHERE user_id = $1 AND add_date >= $2 AND add_date <= $3",
+                [user.id, firstDay, lastDay]
+            );
+            const totalSpent = totalRes.rows[0].total || 0;
+            const income = user.monthly_income || 0;
+            const savings = income - totalSpent;
+            const savingsStatus = savings >= 0 ? "Positive Savings" : "Over Budget";
+
+            // 2. Most Spent Category
+            const catRes = await db.query(
+                "SELECT category, SUM(amount) as total FROM expenses WHERE user_id = $1 AND add_date >= $2 AND add_date <= $3 GROUP BY category ORDER BY total DESC LIMIT 1",
+                [user.id, firstDay, lastDay]
+            );
+            const topCategory = catRes.rows.length > 0 ? catRes.rows[0].category : "None";
+            const topCategoryAmount = catRes.rows.length > 0 ? catRes.rows[0].total : 0;
+
+            // 3. Max Spending Day
+            const dayRes = await db.query(
+                "SELECT add_date, SUM(amount) as total FROM expenses WHERE user_id = $1 AND add_date >= $2 AND add_date <= $3 GROUP BY add_date ORDER BY total DESC LIMIT 1",
+                [user.id, firstDay, lastDay]
+            );
+            let maxDay = "None";
+            let maxDayAmount = 0;
+            if (dayRes.rows.length > 0) {
+                maxDay = new Date(dayRes.rows[0].add_date).toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                maxDayAmount = dayRes.rows[0].total;
+            }
+
+            const htmlContent = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+                    <h2 style="color: #2F4B26; text-align: center;">📊 Your Monthly Financial Report</h2>
+                    <p>Here is your spending summary for this month:</p>
+                    
+                    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <p><strong>💰 Monthly Income:</strong> ₹${income}</p>
+                        <p><strong>💸 Total Spent:</strong> ₹${totalSpent}</p>
+                        <p><strong>🏦 Savings:</strong> <span style="color: ${savings >= 0 ? 'green' : 'red'}">₹${savings} (${savingsStatus})</span></p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <p><strong>🔥 Top Spending Category:</strong> ${topCategory} (₹${topCategoryAmount})</p>
+                        <p><strong>📅 Highest Spending Day:</strong> ${maxDay} (₹${maxDayAmount})</p>
+                    </div>
+
+                    <p style="text-align: center;">
+                        <a href="https://penny-pilot-usoe.vercel.app/track" style="background-color: #B5b25C; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Detailed Analytics</a>
+                    </p>
+                </div>
+             `;
+
+            await sendEmail(user.email, "📅 Your Monthly Financial Report", htmlContent);
+        }
+    } catch (err) {
+        console.error("Monthly report error:", err);
+    }
+});
 app.get("/cron/send-daily-reminders", async (req, res) => {
     const cronSecret = process.env.CRON_SECRET;
     const requestKey = req.query.key;
@@ -617,7 +707,7 @@ app.get("/cron/send-daily-reminders", async (req, res) => {
                             Consistently tracking your expenses is the key to financial freedom. 
                             Take a moment to log your daily spending and keep your streak alive!
                         </p>
-                        <a href="https://penny-pilot-lu7t.onrender.com/login" 
+                        <a href="https://penny-pilot-usoe.vercel.app/login" 
                            style="display: inline-block; margin-top: 20px; padding: 12px 25px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
                            Track Expenses Now
                         </a>
@@ -680,7 +770,7 @@ app.get("/announce-profile", async (req, res) => {
                             </ul>
                         </div>
 
-                        <a href="https://penny-pilot-lu7t.onrender.com/profile" 
+                        <a href="https://penny-pilot-usoe.vercel.app/profile" 
                            style="display: inline-block; padding: 14px 30px; background-color: #B5b25C; color: white; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(181, 178, 92, 0.4); transition: transform 0.2s;">
                            Check My Profile
                         </a>
@@ -699,6 +789,17 @@ app.get("/announce-profile", async (req, res) => {
         console.error("Error in announcement job:", err);
         if (!res.headersSent) res.status(500).json({ error: "Internal server error" });
     }
+});
+
+app.post("/update-income", async (req, res) => {
+    if (!req.isAuthenticated()) return res.redirect("/login");
+    let income = req.body.income;
+    if (income) {
+        // Remove commas if present
+        income = parseInt(income.toString().replace(/,/g, ""), 10);
+        await db.query("UPDATE users SET monthly_income = $1 WHERE id = $2", [income, req.user.id]);
+    }
+    res.redirect("/profile");
 });
 
 export default app;

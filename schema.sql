@@ -69,6 +69,7 @@ CREATE TABLE public.users (
     password text,
     last_update date,
     update_streak integer DEFAULT 0,
+    monthly_income integer DEFAULT 0,
     notes text
 );
 

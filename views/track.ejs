@@ -87,6 +87,25 @@
                         </p>
                         <% } %>
             </div>
+
+            <% if (expenses && expenses.length>= 5) { %>
+                <div style="text-align: center; margin-bottom: 40px;">
+                    <a href="/history" style="
+                        display: inline-block;
+                        padding: 12px 30px;
+                        background-color: #2F4B26;
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 50px;
+                        font-weight: bold;
+                        transition: transform 0.2s;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    " onmouseover="this.style.transform='translateY(-2px)'"
+                        onmouseout="this.style.transform='translateY(0)'">
+                        View All Transactions
+                    </a>
+                </div>
+                <% } %>
         </div>
         <%- include("partials/footer.ejs") %>
     </main>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction History</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="/images/favicon.png" type="image/png">
+    <style>
+        .history-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .history-header h1 {
+            color: #2F4B26;
+            margin: 0;
+        }
+
+        .back-btn {
+            background-color: #B5b25C;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #a3a04d;
+        }
+
+        .expenses-card.full-width {
+            max-width: 100%;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <%- include("partials/header.ejs") %>
+        <main>
+            <div class="history-container">
+                <div class="history-header">
+                    <h1>Transaction History</h1>
+                    <a href="/track" class="back-btn">← Back to Dashboard</a>
+                </div>
+
+                <div class="expenses-card full-width">
+                    <% if (expenses && expenses.length) { %>
+                        <div class="table-wrapper">
+                            <table class="expenses-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Expense</th>
+                                        <th>Type</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% expenses.forEach(function(expense){ %>
+                                        <tr>
+                                            <td>
+                                                <%= expense.add_date.toISOString().split("T")[0] %>
+                                            </td>
+                                            <td>₹ <%= expense.amount %>
+                                            </td>
+                                            <td>
+                                                <%= expense.category %>
+                                            </td>
+                                            <td>
+                                                <%= expense.notes || "-" %>
+                                            </td>
+                                        </tr>
+                                        <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                        <% } else { %>
+                            <div class="no-expenses" style="text-align: center; padding: 40px;">
+                                <img src="/images/empty.svg" alt="No data" style="width: 150px; opacity: 0.5;">
+                                <p style="margin-top: 20px; color: #666;">No transactions found yet.</p>
+                            </div>
+                            <% } %>
+                </div>
+            </div>
+        </main>
+        <%- include("partials/footer.ejs") %>
+</body>
+
+</html>
