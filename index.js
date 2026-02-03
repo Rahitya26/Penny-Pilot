@@ -46,7 +46,7 @@ app.use((req, res, next) => {
 
 
 app.get("/", (req, res) => {
-    res.render("index.ejs");
+    res.render("index.ejs", { isAuthenticated: req.isAuthenticated() });
 });
 
 app.get("/update", (req, res) => {
@@ -701,6 +701,10 @@ app.get("/announce-profile", async (req, res) => {
     }
 });
 
-app.listen(port, (req, res) => {
-    console.log(`Server running on ${port}`);
-})
+export default app;
+
+if (!process.env.VERCEL) {
+    app.listen(port, () => {
+        console.log(`Server running on ${port}`);
+    });
+}
