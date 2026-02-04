@@ -77,7 +77,6 @@ app.get("/profile", async (req, res) => {
         most_spent_amount = category_res.rows[0].total;
     }
 
-    console.log(user);
     res.render("profile.ejs", { user, total_expense, most_spent, most_spent_amount });
 });
 
